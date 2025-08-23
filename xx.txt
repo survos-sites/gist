@@ -1,0 +1,396 @@
+var/freedict/
+├── afr-deu
+│   ├── stardict
+│   │   └── afr-deu
+│   │       ├── afr-deu.dict.dz
+│   │       ├── afr-deu.idx.gz
+│   │       ├── afr-deu.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── afr-eng
+│   ├── stardict
+│   │   └── afr-eng
+│   │       ├── afr-eng.dict.dz
+│   │       ├── afr-eng.idx.gz
+│   │       ├── afr-eng.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ara-eng
+│   ├── stardict
+│   │   └── ara-eng
+│   │       ├── ara-eng.dict.dz
+│   │       ├── ara-eng.idx.gz
+│   │       ├── ara-eng.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── bre-fra
+│   ├── stardict
+│   │   └── bre-fra
+│   │       ├── bre-fra.dict.dz
+│   │       ├── bre-fra.idx.gz
+│   │       ├── bre-fra.ifo
+│   │       ├── COPYING
+│   │       └── INSTALL
+│   └── stardict.tar.xz
+├── cat-eng
+│   ├── stardict
+│   │   └── cat-eng
+│   │       ├── cat-eng.dict.dz
+│   │       ├── cat-eng.idx.gz
+│   │       ├── cat-eng.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── cat-fin
+│   ├── stardict
+│   │   └── cat-fin
+│   │       ├── cat-fin.dict.dz
+│   │       ├── cat-fin.idx.gz
+│   │       ├── cat-fin.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── cat-fra
+│   ├── stardict
+│   │   └── cat-fra
+│   │       ├── cat-fra.dict.dz
+│   │       ├── cat-fra.idx.gz
+│   │       ├── cat-fra.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── cat-ita
+│   ├── stardict
+│   │   └── cat-ita
+│   │       ├── cat-ita.dict.dz
+│   │       ├── cat-ita.idx.gz
+│   │       ├── cat-ita.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── cat-por
+│   ├── stardict
+│   │   └── cat-por
+│   │       ├── cat-por.dict.dz
+│   │       ├── cat-por.idx.gz
+│   │       ├── cat-por.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── cat-spa
+│   ├── stardict
+│   │   └── cat-spa
+│   │       ├── cat-spa.dict.dz
+│   │       ├── cat-spa.idx.gz
+│   │       ├── cat-spa.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ces-eng
+│   ├── stardict
+│   │   └── ces-eng
+│   │       ├── ces-eng.dict.dz
+│   │       ├── ces-eng.idx.gz
+│   │       ├── ces-eng.ifo
+│   │       ├── COPYING
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ckb-kmr
+│   ├── stardict
+│   │   └── ckb-kmr
+│   │       ├── ckb-kmr.dict.dz
+│   │       ├── ckb-kmr.idx.gz
+│   │       ├── ckb-kmr.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── cym-eng
+│   ├── stardict
+│   │   └── cym-eng
+│   │       ├── COPYING
+│   │       ├── cym-eng.dict.dz
+│   │       ├── cym-eng.idx.gz
+│   │       ├── cym-eng.ifo
+│   │       └── INSTALL
+│   └── stardict.tar.xz
+├── dan-eng
+│   ├── stardict
+│   │   └── dan-eng
+│   │       ├── COPYING
+│   │       ├── dan-eng.dict.dz
+│   │       ├── dan-eng.idx.gz
+│   │       ├── dan-eng.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-bul
+│   ├── stardict
+│   │   └── deu-bul
+│   │       ├── COPYING
+│   │       ├── deu-bul.dict.dz
+│   │       ├── deu-bul.idx.gz
+│   │       ├── deu-bul.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-cat
+│   ├── stardict
+│   │   └── deu-cat
+│   │       ├── COPYING
+│   │       ├── deu-cat.dict.dz
+│   │       ├── deu-cat.idx.gz
+│   │       ├── deu-cat.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-ell
+│   ├── stardict
+│   │   └── deu-ell
+│   │       ├── COPYING
+│   │       ├── deu-ell.dict.dz
+│   │       ├── deu-ell.idx.gz
+│   │       ├── deu-ell.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-eng
+│   ├── stardict
+│   │   └── deu-eng
+│   │       ├── COPYING
+│   │       ├── deu-eng.dict.dz
+│   │       ├── deu-eng.idx.gz
+│   │       └── deu-eng.ifo
+│   └── stardict.tar.xz
+├── deu-fin
+│   ├── stardict
+│   │   └── deu-fin
+│   │       ├── COPYING
+│   │       ├── deu-fin.dict.dz
+│   │       ├── deu-fin.idx.gz
+│   │       ├── deu-fin.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-fra
+│   ├── stardict
+│   │   └── deu-fra
+│   │       ├── COPYING
+│   │       ├── deu-fra.dict.dz
+│   │       ├── deu-fra.idx.gz
+│   │       ├── deu-fra.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-gle
+│   ├── stardict
+│   │   └── deu-gle
+│   │       ├── COPYING
+│   │       ├── deu-gle.dict.dz
+│   │       ├── deu-gle.idx.gz
+│   │       ├── deu-gle.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-ind
+│   ├── stardict
+│   │   └── deu-ind
+│   │       ├── COPYING
+│   │       ├── deu-ind.dict.dz
+│   │       ├── deu-ind.idx.gz
+│   │       ├── deu-ind.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-ita
+│   ├── stardict
+│   │   └── deu-ita
+│   │       ├── COPYING
+│   │       ├── deu-ita.dict.dz
+│   │       ├── deu-ita.idx.gz
+│   │       ├── deu-ita.ifo
+│   │       └── INSTALL
+│   └── stardict.tar.xz
+├── deu-kur
+│   ├── stardict
+│   │   └── deu-kur
+│   │       ├── deu-kur.dict.dz
+│   │       ├── deu-kur.idx.gz
+│   │       ├── deu-kur.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-lit
+│   ├── stardict
+│   │   └── deu-lit
+│   │       ├── COPYING
+│   │       ├── deu-lit.dict.dz
+│   │       ├── deu-lit.idx.gz
+│   │       ├── deu-lit.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-nld
+│   ├── stardict
+│   │   └── deu-nld
+│   │       ├── COPYING
+│   │       ├── deu-nld.dict.dz
+│   │       ├── deu-nld.idx.gz
+│   │       ├── deu-nld.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-pol
+│   ├── stardict
+│   │   └── deu-pol
+│   │       ├── COPYING
+│   │       ├── deu-pol.dict.dz
+│   │       ├── deu-pol.idx.gz
+│   │       ├── deu-pol.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-por
+│   ├── stardict
+│   │   └── deu-por
+│   │       ├── COPYING
+│   │       ├── deu-por.dict.dz
+│   │       ├── deu-por.idx.gz
+│   │       ├── deu-por.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-rus
+│   ├── stardict
+│   │   └── deu-rus
+│   │       ├── COPYING
+│   │       ├── deu-rus.dict.dz
+│   │       ├── deu-rus.idx.gz
+│   │       ├── deu-rus.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-spa
+│   ├── stardict
+│   │   └── deu-spa
+│   │       ├── COPYING
+│   │       ├── deu-spa.dict.dz
+│   │       ├── deu-spa.idx.gz
+│   │       ├── deu-spa.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-swe
+│   ├── stardict
+│   │   └── deu-swe
+│   │       ├── COPYING
+│   │       ├── deu-swe.dict.dz
+│   │       ├── deu-swe.idx.gz
+│   │       ├── deu-swe.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── deu-tur
+│   ├── stardict
+│   │   └── deu-tur
+│   │       ├── deu-tur.dict.dz
+│   │       ├── deu-tur.idx.gz
+│   │       ├── deu-tur.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-bul
+│   ├── stardict
+│   │   └── ell-bul
+│   │       ├── COPYING
+│   │       ├── ell-bul.dict.dz
+│   │       ├── ell-bul.idx.gz
+│   │       ├── ell-bul.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-cat
+│   ├── stardict
+│   │   └── ell-cat
+│   │       ├── COPYING
+│   │       ├── ell-cat.dict.dz
+│   │       ├── ell-cat.idx.gz
+│   │       ├── ell-cat.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-deu
+│   ├── stardict
+│   │   └── ell-deu
+│   │       ├── COPYING
+│   │       ├── ell-deu.dict.dz
+│   │       ├── ell-deu.idx.gz
+│   │       ├── ell-deu.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-eng
+│   ├── stardict
+│   │   └── ell-eng
+│   │       ├── COPYING
+│   │       ├── ell-eng.dict.dz
+│   │       ├── ell-eng.idx.gz
+│   │       ├── ell-eng.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-fin
+│   ├── stardict
+│   │   └── ell-fin
+│   │       ├── COPYING
+│   │       ├── ell-fin.dict.dz
+│   │       ├── ell-fin.idx.gz
+│   │       ├── ell-fin.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-fra
+│   ├── stardict
+│   │   └── ell-fra
+│   │       ├── COPYING
+│   │       ├── ell-fra.dict.dz
+│   │       ├── ell-fra.idx.gz
+│   │       ├── ell-fra.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-gle
+│   ├── stardict
+│   │   └── ell-gle
+│   │       ├── COPYING
+│   │       ├── ell-gle.dict.dz
+│   │       ├── ell-gle.idx.gz
+│   │       ├── ell-gle.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+├── ell-ind
+│   ├── stardict
+│   │   └── ell-ind
+│   │       ├── COPYING
+│   │       ├── ell-ind.dict.dz
+│   │       ├── ell-ind.idx.gz
+│   │       ├── ell-ind.ifo
+│   │       ├── INSTALL
+│   │       └── README
+│   └── stardict.tar.xz
+└── ell-ita
+
+122 directories, 272 files

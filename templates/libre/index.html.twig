@@ -1,0 +1,88 @@
+{# templates/libre/index.html.twig #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FreeDict Translate (speed > quality)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --gap: 12px; --pad: 14px; --bg: #f8fafc; --card:#fff; --muted:#64748b; --border:#e2e8f0; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color:#0f172a; }
+    .wrap { max-width: 980px; margin: 40px auto; padding: 0 var(--pad); }
+    .card { background: var(--card); border:1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+    .header { padding: 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;}
+    .title { font-size: 20px; font-weight: 700; }
+    .muted { color: var(--muted); font-size: 14px; }
+    form { display: grid; gap: var(--gap); padding: 20px; }
+    .row { display: grid; gap: var(--gap); grid-template-columns: 1fr 1fr; }
+    textarea { width:100%; min-height: 180px; padding: var(--pad); font: inherit; border-radius: 10px; border:1px solid var(--border); }
+    select, button, input[type="text"] { padding: 10px 12px; font: inherit; border-radius: 10px; border:1px solid var(--border); background:#fff; }
+    button { cursor: pointer; font-weight:600; }
+    .actions { display:flex; gap: var(--gap); align-items:center; }
+    .result { white-space: pre-wrap; background:#0f172a; color:#e2e8f0; padding:18px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .error { color:#b91c1c; font-weight:600; }
+    .footer { padding: 14px 20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div class="title">FreeDict Translate</div>
+        <div class="muted">Word-by-word • StarDict • Fast & rough</div>
+      </div>
+
+      <form action="{{ path('libre_ui_translate') }}" method="post">
+        <div class="row">
+          <label>
+            <div class="muted">Source language</div>
+            <select name="source" required>
+              {% for code, name in languages %}
+                <option value="{{ code }}" {{ code == (prev_source ?? 'eng') ? 'selected' : '' }}>{{ name }} ({{ code }})</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>
+            <div class="muted">Target language</div>
+            <select name="target" required>
+              {% for code, name in languages %}
+                <option value="{{ code }}" {{ code == (prev_target ?? 'deu') ? 'selected' : '' }}>{{ name }} ({{ code }})</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <div class="muted">Text</div>
+          <textarea name="q" placeholder="Type or paste text…" required>{{ prev_q ?? '' }}</textarea>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Translate</button>
+          {% if error is defined and error %}
+            <div class="error">Error: {{ error }}</div>
+          {% endif %}
+        </div>
+      </form>
+
+      <div class="footer">
+        <div>API: <code>POST /translate</code></div>
+        <div>Tip: Use <code>/languages</code> to list available codes.</div>
+      </div>
+    </div>
+
+    {% if translatedText is defined %}
+      <div style="height:12px"></div>
+      <div class="card">
+        <div class="header">
+          <div class="title">Result</div>
+          <div class="muted">Speed > quality. Unknown words remain unchanged.</div>
+        </div>
+        <div class="result">{{ translatedText }}</div>
+      </div>
+    {% endif %}
+
+  </div>
+</body>
+</html>
