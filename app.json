@@ -1,11 +1,11 @@
 {
-    "name": "gist",
-    "description": "A fast word-by-word translator using freedict dictionaries",
+    "name": "museado",
+    "description": "manage museum inventory",
     "keywords": [
         "php",
         "symfony"
     ],
-    "repository": "https://github.com/survos-sites/gist",
+    "repository": "https://github.com/survos/museado",
     "scripts": {
         "dokku": {
             "predeploy": "bin/console importmap:install && bin/console asset-map:compile && bin/console  secrets:decrypt-to-local --force && bin/console doctrine:migrations:migrate -n --allow-no-migration",
