@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     :root { --gap: 12px; --pad: 14px; --bg: #f8fafc; --card:#fff; --muted:#64748b; --border:#e2e8f0; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color:#0f172a; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans"; background: var(--bg); color:#0f172a; }
     .wrap { max-width: 980px; margin: 40px auto; padding: 0 var(--pad); }
     .card { background: var(--card); border:1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
     .header { padding: 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;}
@@ -18,10 +18,11 @@
     textarea { width:100%; min-height: 180px; padding: var(--pad); font: inherit; border-radius: 10px; border:1px solid var(--border); }
     select, button, input[type="text"] { padding: 10px 12px; font: inherit; border-radius: 10px; border:1px solid var(--border); background:#fff; }
     button { cursor: pointer; font-weight:600; }
-    .actions { display:flex; gap: var(--gap); align-items:center; }
+    .actions { display:flex; gap: var(--gap); align-items:center; flex-wrap: wrap; }
     .result { white-space: pre-wrap; background:#0f172a; color:#e2e8f0; padding:18px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     .error { color:#b91c1c; font-weight:600; }
     .footer { padding: 14px 20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; color: var(--muted); font-size: 13px; }
+    .toggle { display:flex; align-items:center; gap:8px; }
   </style>
 </head>
 <body>
@@ -60,6 +61,17 @@
 
         <div class="actions">
           <button type="submit">Translate</button>
+
+          <label class="toggle" title="If checked, calls the HTTP /translate endpoint instead of the local service">
+            <input type="checkbox" name="via_http" value="1" {{ (prev_via_http ?? 0) ? 'checked' : '' }}>
+            Use HTTP API
+          </label>
+
+          <label class="toggle" title="Rule-based layer (articles/plurals) over word-by-word lookup">
+            <input type="checkbox" name="use_rules" value="1" {{ (prev_use_rules ?? 0) ? 'checked' : '' }}>
+            Use rules mode
+          </label>
+
           {% if error is defined and error %}
             <div class="error">Error: {{ error }}</div>
           {% endif %}
@@ -67,8 +79,8 @@
       </form>
 
       <div class="footer">
-        <div>API: <code>POST /translate</code></div>
-        <div>Tip: Use <code>/languages</code> to list available codes.</div>
+        <div>Modes: plain word-by-word (default) or rules (articles + basic plurals).</div>
+        <div>API: <code>POST /translate</code> with <code>{"mode":"rules"}</code> for rules.</div>
       </div>
     </div>
 

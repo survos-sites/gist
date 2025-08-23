@@ -24,7 +24,9 @@ final class BrowseFreeDictCommand
         #[Argument('Dictionary pair slug, e.g. "eng-deu"')]
         string $dictPair,
         #[Option('Force re-download/extract even if cached locally', shortcut: 'f')]
-        bool $force = false
+        bool $force = false,
+        #[Option('Output format: text|json (default text)', shortcut: 'F')]
+        string $format = 'text',
     ): int {
         $io->title("Browsing FreeDict: $dictPair");
 
@@ -55,21 +57,56 @@ final class BrowseFreeDictCommand
         $dictDir = $this->freeDict->ensureStarDictReady($dictPair, $url);
 
         $io->writeln('Reading first record…');
-        $res = $this->freeDict->starDictFirstRecord($dictDir);
+        $detailed = $this->freeDict->starDictFirstRecordDetailed($dictDir);
 
-        if (!($res['found'] ?? false)) {
-            $io->warning($res['message'] ?? 'No entry found.');
+        if (!($detailed['found'] ?? false)) {
+            $io->warning($detailed['message'] ?? 'No entry found.');
             return 0;
         }
 
+        if (\strtolower($format) === 'json') {
+            $io->writeln(\json_encode([
+                'pair' => $dictPair,
+                'catalog' => [
+                    'name' => $row->name,
+                    'src' => $row->src,
+                    'dst' => $row->dst,
+                    'edition' => $row->edition,
+                    'headwords' => $row->headwords,
+                    'maintainerName' => $row->maintainerName,
+                    'status' => $row->status,
+                    'release' => [
+                        'platform' => $row->bestPlatform,
+                        'url' => $row->bestUrl,
+                        'date' => $row->releaseDate,
+                        'version' => $row->releaseVersion,
+                        'size' => $row->releaseSize,
+                    ],
+                ],
+                'ifo' => $detailed['ifo'] ?? [],
+                'paths' => $detailed['paths'] ?? [],
+                'dict_size' => $detailed['dict_size'] ?? null,
+                'reader' => $detailed['reader'] ?? null,
+                'headword' => $detailed['headword'] ?? null,
+                'offsets' => $detailed['offsets'] ?? null,
+                // both raw & cleaned text to help decide DB import strategies
+                'value_raw' => $detailed['value_raw'] ?? null,
+                'value_text' => $detailed['value_text'] ?? null,
+                'value_preview' => $detailed['value_preview'] ?? null,
+            ], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_IGNORE));
+            return 0;
+        }
+
+        // text mode (previous behavior)
         $io->section('Dictionary');
-        $io->writeln((string)($res['bookname'] ?? $dictPair) . '  [' . ($res['reader'] ?? 'unknown') . ']');
+        $book = $detailed['ifo']['bookname'] ?? $dictPair;
+        $io->writeln($book . '  [' . ($detailed['reader'] ?? 'unknown') . ']');
 
         $io->section('Headword');
-        $io->writeln((string)($res['headword'] ?? '(unknown)'));
+        $io->writeln((string)($detailed['headword'] ?? '(unknown)'));
 
         $io->section('Value (snippet)');
-        $io->writeln((string)($res['value_snippet'] ?? '(empty)'));
+        $io->writeln((string)($detailed['value_preview'] ?? '(empty)'));
 
         return 0;
     }

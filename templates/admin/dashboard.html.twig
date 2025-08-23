@@ -1,0 +1,74 @@
+{# templates/admin/dashboard.html.twig #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FreeDict Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --gap: 12px; --pad: 14px; --bg: #f8fafc; --card:#fff; --muted:#64748b; --border:#e2e8f0; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans"; background: var(--bg); color:#0f172a; }
+    .wrap { max-width: 1100px; margin: 32px auto; padding: 0 var(--pad); display:grid; gap: var(--gap); }
+    .card { background: var(--card); border:1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+    .header { padding: 14px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    h2 { margin:0; font-size: 18px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align:left; }
+    th { color: var(--muted); font-weight:600; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="card">
+      <div class="header">
+        <h2>Lemma counts by language</h2>
+        <div class="muted">DB snapshot</div>
+      </div>
+      <table>
+        <thead><tr><th>Lang</th><th>Lemma Count</th></tr></thead>
+        <tbody>
+        {% for r in lemmaRows %}
+          <tr><td>{{ r.code }}</td><td>{{ r.lemmas }}</td></tr>
+        {% else %}
+          <tr><td colspan="2" class="muted">No lemmas yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="header"><h2>Top translation pairs</h2></div>
+        <table>
+          <thead><tr><th>Src</th><th>Dst</th><th>Edges</th></tr></thead>
+          <tbody>
+          {% for r in pairRows %}
+            <tr><td>{{ r.src }}</td><td>{{ r.dst }}</td><td>{{ r.edges }}</td></tr>
+          {% else %}
+            <tr><td colspan="3" class="muted">No edges yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="header"><h2>Dictionaries</h2></div>
+        <table>
+          <thead><tr><th>Name</th><th>Src</th><th>Dst</th><th>Version</th></tr></thead>
+          <tbody>
+          {% for d in dictRows %}
+            <tr><td>{{ d.name }}</td><td>{{ d.src }}</td><td>{{ d.dst }}</td><td>{{ d.release_version ?? '—' }}</td></tr>
+          {% else %}
+            <tr><td colspan="4" class="muted">No dictionaries yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
