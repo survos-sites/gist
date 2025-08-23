@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3c08084a904dcf893ac56c66c689d6b5",
+    "content-hash": "4399e17a8b0a3e181fbc80e87a08f797",
     "packages": [
         {
             "name": "composer/semver",
@@ -1458,6 +1458,130 @@
                 }
             ],
             "time": "2025-03-06T22:45:56+00:00"
+        },
+        {
+            "name": "inspector-apm/inspector-php",
+            "version": "3.16.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inspector-apm/inspector-php.git",
+                "reference": "40c9e72f8f973bb5ca038135f1a0b78b91bc66af"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inspector-apm/inspector-php/zipball/40c9e72f8f973bb5ca038135f1a0b78b91bc66af",
+                "reference": "40c9e72f8f973bb5ca038135f1a0b78b91bc66af",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "ext-curl": "*",
+                "friendsofphp/php-cs-fixer": "^3.75",
+                "inspector-apm/neuron-ai": "^1.2.22",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^9.0",
+                "rector/rector": "^2.0",
+                "tomasvotruba/type-coverage": "^2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Inspector\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Valerio Barbera",
+                    "email": "valerio@inspector.dev"
+                }
+            ],
+            "description": "Inspector monitoring for PHP applications.",
+            "keywords": [
+                "inspector",
+                "monitoring",
+                "observability",
+                "php",
+                "telemetry"
+            ],
+            "support": {
+                "issues": "https://github.com/inspector-apm/inspector-php/issues",
+                "source": "https://github.com/inspector-apm/inspector-php/tree/3.16.1"
+            },
+            "time": "2025-07-09T17:22:19+00:00"
+        },
+        {
+            "name": "inspector-apm/inspector-symfony",
+            "version": "1.8.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inspector-apm/inspector-symfony.git",
+                "reference": "fac8d15fa1c3998f43e261212f5d27bce29c3f2b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inspector-apm/inspector-symfony/zipball/fac8d15fa1c3998f43e261212f5d27bce29c3f2b",
+                "reference": "fac8d15fa1c3998f43e261212f5d27bce29c3f2b",
+                "shasum": ""
+            },
+            "require": {
+                "inspector-apm/inspector-php": "^3.8",
+                "php": ">=7.4",
+                "symfony/config": "^5.2|^6.0|^7.0",
+                "symfony/console": "^5.2|^6.0|^7.0",
+                "symfony/dependency-injection": "^5.2|^6.0|^7.0",
+                "symfony/event-dispatcher": "^5.2|^6.0|^7.0",
+                "symfony/framework-bundle": "^5.2|^6.0|^7.0",
+                "symfony/http-kernel": "^5.2|^6.0|^7.0",
+                "symfony/yaml": "^5.2|^6.0|^7.0"
+            },
+            "require-dev": {
+                "doctrine/doctrine-bundle": "^2.4",
+                "phpunit/phpunit": "^9.5",
+                "symfony/doctrine-messenger": "^5.2|^6.0|^7.0",
+                "symfony/mailer": "^5.2|^6.0|^7.0",
+                "symfony/messenger": "^5.2|^6.0|^7.2",
+                "symfony/notifier": "^5.2|^6.0|^7.0",
+                "symfony/security-bundle": "^5.2|^6.0|^7.0",
+                "symfony/test-pack": "^1.0"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Inspector\\Symfony\\Bundle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Valerio Barbera",
+                    "email": "valerio@inspector.dev"
+                }
+            ],
+            "description": "Code Execution Monitoring for Symfony applications.",
+            "homepage": "https://inspector.dev",
+            "keywords": [
+                "bundle",
+                "error-tracking",
+                "inspector",
+                "messenger-monitoring",
+                "monitoring",
+                "php",
+                "symfony"
+            ],
+            "support": {
+                "issues": "https://github.com/inspector-apm/inspector-symfony/issues",
+                "source": "https://github.com/inspector-apm/inspector-symfony/tree/1.8.2"
+            },
+            "time": "2025-02-24T14:17:36+00:00"
         },
         {
             "name": "joomla/string",

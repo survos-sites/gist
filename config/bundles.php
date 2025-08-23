@@ -17,4 +17,5 @@ return [
     EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle::class => ['all' => true],
     Survos\CoreBundle\SurvosCoreBundle::class => ['all' => true],
     Survos\DeploymentBundle\SurvosDeploymentBundle::class => ['all' => true],
+    Inspector\Symfony\Bundle\InspectorBundle::class => ['all' => true],
 ];
