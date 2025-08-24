@@ -4,22 +4,29 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Workflow\IFreeDictCatalogWorkflow;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\FreeDictCatalogRepository;
+use Survos\WorkflowBundle\Traits\MarkingInterface;
+use Survos\WorkflowBundle\Traits\MarkingTrait;
 
 #[ORM\Entity(repositoryClass: FreeDictCatalogRepository::class)]
 #[ORM\Table(name: 'freedict_catalog')]
 #[ORM\UniqueConstraint(name: 'uniq_fdc_name', columns: ['name'])]
-class FreeDictCatalog
+class FreeDictCatalog implements MarkingInterface
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    public int $id;
+    use MarkingTrait;
+
+    public function __construct(
+        #[ORM\Id]
+        #[ORM\Column(length: 63)]
+        private(set) readonly string $name
+)
+    {
+        $this->marking = IFreeDictCatalogWorkflow::PLACE_NEW;
+    }
 
     /** Pair slug like 'afr-deu' from JSON["name"] */
-    #[ORM\Column(length: 63)]
-    public string $name;
 
     /** Derived from name: 'afr' */
     #[ORM\Column(length: 16)]

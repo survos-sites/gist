@@ -18,3 +18,6 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+## dokku storage:mount  /mnt/volume-1/project-data/gist:/app/data
+/data

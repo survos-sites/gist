@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Dictionary;
+use App\Entity\FreeDictCatalog;
 use App\Entity\Language;
 use App\Entity\Lemma;
 use App\Entity\Sense;
@@ -36,7 +37,7 @@ final class TeiImportService
 
     public function cacheDir(): string
     {
-        $dir = $this->projectDir . '/var/tei';
+        $dir = $this->projectDir . '/data/tei';
         $this->fs->mkdir($dir);
         return $dir;
     }
@@ -64,9 +65,9 @@ final class TeiImportService
         }
     }
 
-    public function pickTeiUrl(array $item): array
+    public function pickTeiUrl(FreeDictCatalog $catalog): array
     {
-        $releases = $item['releases'] ?? [];
+        $releases = $catalog->raw['releases'] ?? [];
         foreach (['tei', 'src'] as $platform) {
             $c = \array_values(\array_filter($releases, fn($r) => ($r['platform'] ?? null) === $platform));
             if ($c) {
@@ -106,7 +107,7 @@ final class TeiImportService
         return $dest;
     }
 
-    private function download(string $url, string $dest): void
+    public function download(string $url, string $dest): void
     {
         $this->fs->mkdir(\dirname($dest));
         $resp = $this->http->request('GET', $url, ['timeout' => 600]);
@@ -148,11 +149,11 @@ final class TeiImportService
         return null;
     }
 
-    public function importTei(array $catalogItem, bool $truncate = false, ?int $limit = null, ?callable $progress = null): Dictionary
+    public function importTei(FreeDictCatalog $catalog, bool $truncate = false, ?int $limit = null, ?callable $progress = null): Dictionary
     {
-        $this->refreshManagers();
+        $this->refreshManagers(); /// ?
 
-        $pair = (string)($catalogItem['name'] ?? '');
+        $pair = $catalog->name;
         if ($pair === '' || !\str_contains($pair, '-')) {
             throw new \InvalidArgumentException('Catalog item missing name (pair).');
         }
@@ -161,22 +162,22 @@ final class TeiImportService
         $src = $this->langRepo->getOrCreate($srcCode, null, $srcCode);
         $dst = $this->langRepo->getOrCreate($dstCode, null, $dstCode);
 
-        $dict = $this->dictRepo->findOneBy(['name' => $pair]) ?? new Dictionary();
+        if (!$dict = $this->dictRepo->findOneBy(['name' => $pair])) {
+            $dict = new Dictionary();
+            $this->em->persist($dict);
+        }
         $dict->name = $pair;
         $dict->src = $src;
         $dict->dst = $dst;
         $dict->edition = (string)($catalogItem['edition'] ?? '') ?: null;
         $dict->releaseVersion = (string)($catalogItem['edition'] ?? '') ?: null;
 
-        [$teiUrl] = $this->pickTeiUrl($catalogItem);
+        [$teiUrl] = $this->pickTeiUrl($catalog);
         if ($teiUrl === '') {
             throw new \RuntimeException("No TEI URL for $pair.");
         }
         $dict->teiUrl = $teiUrl;
 
-        if (!$this->em->contains($dict)) {
-            $this->em->persist($dict);
-        }
         $this->safeFlush();
 
         // 🔁 PORTABLE TRUNCATE (SQLite + Postgres)
@@ -241,6 +242,7 @@ final class TeiImportService
                 $tw = \trim($tw);
                 if ($tw === '') continue;
                 $tLemma = $this->lemmaRepo->upsert($dst, $tw, null, null, null);
+                dd($tLemma);
 
                 $exists = $this->transRepo->findOneBy(['srcLemma' => $lemma, 'dstLemma' => $tLemma]);
                 if (!$exists) {

@@ -18,4 +18,7 @@ return [
     Survos\CoreBundle\SurvosCoreBundle::class => ['all' => true],
     Survos\DeploymentBundle\SurvosDeploymentBundle::class => ['all' => true],
     Inspector\Symfony\Bundle\InspectorBundle::class => ['all' => true],
+    Jwage\PhpAmqpLibMessengerBundle\PhpAmqpLibMessengerBundle::class => ['all' => true],
+    Survos\WorkflowBundle\SurvosWorkflowBundle::class => ['all' => true],
+    Survos\CodeBundle\SurvosCodeBundle::class => ['dev' => true, 'test' => true],
 ];

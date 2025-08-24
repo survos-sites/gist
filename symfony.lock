@@ -59,6 +59,9 @@
             "config/packages/inspector.yaml"
         ]
     },
+    "jwage/phpamqplib-messenger": {
+        "version": "0.8.5"
+    },
     "phpunit/phpunit": {
         "version": "12.3",
         "recipe": {
@@ -74,10 +77,16 @@
             "bin/phpunit"
         ]
     },
+    "survos/code-bundle": {
+        "version": "1.5.602"
+    },
     "survos/core-bundle": {
         "version": "1.6.44"
     },
     "survos/deployment-bundle": {
+        "version": "1.6.44"
+    },
+    "survos/workflow-helper-bundle": {
         "version": "1.6.44"
     },
     "symfony/asset-mapper": {
@@ -368,6 +377,18 @@
         },
         "files": [
             "config/packages/messenger.yaml"
+        ]
+    },
+    "symfony/workflow": {
+        "version": "7.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.3",
+            "ref": "3b2f8ca32a07fcb00f899649053943fa3d8bbfb6"
+        },
+        "files": [
+            "config/packages/workflow.yaml"
         ]
     },
     "twig/extra-bundle": {

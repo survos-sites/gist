@@ -40,8 +40,7 @@ final class TeiImportCommand
 
         $count = 0;
         $io->title("TEI import for $pair");
-        $dict = $this->svc->importTei(
-            $row->raw,
+        $dict = $this->svc->importTei($row,
             truncate: $force,
             limit: $limit,
             progress: function (int $n) use (&$count, $io) {

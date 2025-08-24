@@ -10,6 +10,7 @@ use App\Service\FreeDictService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(name: 'app:load', description: 'Load the FreeDict JSON into an entity')]
@@ -23,10 +24,17 @@ final class LoadFreeDictCatalogCommand
 
     public function __invoke(
         SymfonyStyle $io,
-        #[Argument('Fetch the FreeDict database and upsert the catalog')]
-        ?string $noop = null
+        #[Option] ?bool $reset = null
     ): int {
         $io->title('Loading FreeDict catalog');
+
+        if ($reset) {
+            foreach ($this->repo->findAll() as $freeDict) {
+                $this->em->remove($freeDict);
+            }
+            $this->em->flush();
+        }
+
         $data = $this->freeDict->fetchCatalog();
 
         // The modern endpoint returns a dictionary-per-file JSON (like your sample),
@@ -39,20 +47,20 @@ final class LoadFreeDictCatalogCommand
 
         $count = 0;
         foreach ($items as $item) {
-            if (!\is_array($item)) continue;
             // Required: "name" like 'afr-deu'
             $name = (string)($item['name'] ?? '');
-            if ($name === '') continue;
 
             // Derive src/dst from name
             [$src, $dst] = \array_pad(\explode('-', $name, 2), 2, null);
             if (!$src || !$dst) continue;
 
-            // Prefer stardict release
+            // Prefer stardict release?
             [$url, $platform, $rdate, $rver, $rsize] = $this->freeDict->pickBestRelease($item);
 
-            $row = $this->repo->findOneByName($name) ?? new FreeDictCatalog();
-            $row->name = $name;
+            if (!$row = $this->repo->findOneByName($name)) {
+                $row = new FreeDictCatalog($name);
+            }
+
             $row->src = $src;
             $row->dst = $dst;
 

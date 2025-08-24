@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Psr\Cache\CacheItemInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
@@ -15,26 +17,29 @@ final class FreeDictService
 
     public function __construct(
         private readonly HttpClientInterface $http,
+        private CacheInterface $cache,
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
         private readonly Filesystem $fs = new Filesystem(),
     ) {}
 
     public function getCacheDir(): string
     {
-        $dir = $this->projectDir . '/var/freedict';
+        $dir = $this->projectDir . '/data';
         $this->fs->mkdir($dir);
         return $dir;
     }
 
     public function fetchCatalog(): array
     {
-        $resp = $this->http->request('GET', self::CATALOG_URL, ['timeout' => 60]);
-        if (200 !== $resp->getStatusCode()) {
-            throw new \RuntimeException('Failed to fetch FreeDict catalog JSON.');
-        }
-        /** @var array $data */
-        $data = $resp->toArray();
-        return $data;
+        return $this->cache->get('cat', function (CacheItemInterface $item) {
+            $resp = $this->http->request('GET', self::CATALOG_URL, ['timeout' => 60]);
+            if (200 !== $resp->getStatusCode()) {
+                throw new \RuntimeException('Failed to fetch FreeDict catalog JSON.');
+            }
+            /** @var array $data */
+            $data = $resp->toArray();
+            return $data;
+        });
     }
 
     public function pickBestRelease(array $item, bool $stardictOnly = false): array
