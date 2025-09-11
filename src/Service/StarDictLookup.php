@@ -11,12 +11,6 @@ use StarDict\StarDict;
  * StarDict word lookups with transparent fallback:
  * - Use skoro/stardict for classic 2.4.2 (32-bit) dictionaries.
  * - For v3 dictionaries (idxoffsetbits 32/64), build an in-memory index map and read from .dict.
- *
- * Process-lifetime caches:
- *  - $skoro[Pair] => StarDict
- *  - $maps[Pair]  => array<string word, array{off:int,size:int}>
- *  - $dictPath[Pair] => string (.dict, plain)
- *  - $meta[Pair] => array{bits:int, version:string, bookname:string}
  */
 final class StarDictLookup
 {
@@ -39,10 +33,11 @@ final class StarDictLookup
      */
     public function translateWordByWord(string $src, string $dst, string $text): string
     {
-        $pair = "{$src}-{$dst}";
+        $pair = $this->pairFrom($src, $dst);
         $this->ensurePairReady($pair);
 
-        $parts = \preg_split('~(\p{L}+)~u', $text, -1, \PREG_SPLIT_DELIM_CAPTURE);
+        $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
         if ($parts === false) {
             return $text;
         }
@@ -65,7 +60,7 @@ final class StarDictLookup
      */
     public function translateWordDirect(string $src, string $dst, string $token): string
     {
-        $pair = "{$src}-{$dst}";
+        $pair = $this->pairFrom($src, $dst);
         $this->ensurePairReady($pair);
 
         // exact
@@ -88,7 +83,7 @@ final class StarDictLookup
      */
     public function lookupOne(string $src, string $dst, string $token): ?string
     {
-        $pair = "{$src}-{$dst}";
+        $pair = $this->pairFrom($src, $dst);
         $this->ensurePairReady($pair);
 
         // try exact then lower
@@ -123,13 +118,38 @@ final class StarDictLookup
 
     /* ======================= internal ======================= */
 
+    private function pairFrom(string $src, string $dst): string
+    {
+        return $this->normalizeCode($src) . '-' . $this->normalizeCode($dst);
+    }
+
+    private function normalizeCode(string $code): string
+    {
+        $code = \strtolower(\trim($code));
+        if (\strlen($code) === 3) {
+            return $code;
+        }
+        // Common ISO-639-1 → ISO-639-3 map (extend as needed)
+        return match ($code) {
+            'en' => 'eng',
+            'es' => 'spa',
+            'fr' => 'fra',
+            'de' => 'deu',
+            'it' => 'ita',
+            'pt' => 'por',
+            'nl' => 'nld',
+            'ar' => 'ara',
+            'ca' => 'cat',
+            'af' => 'afr',
+            default => $code, // if unknown 2-letter, try as-is
+        };
+    }
+
     private function translateToken(string $pair, string $word): string
     {
-        // Try exact
         $v = $this->lookup($pair, $word);
         if ($v !== null) return $v;
 
-        // Try lower-cased
         $lower = \mb_strtolower($word);
         if ($lower !== $word) {
             $v = $this->lookup($pair, $lower);
@@ -141,7 +161,6 @@ final class StarDictLookup
 
     private function lookup(string $pair, string $key): ?string
     {
-        // skoro-backed?
         if (isset($this->skoro[$pair])) {
             $dict = $this->skoro[$pair];
             try {
@@ -154,7 +173,6 @@ final class StarDictLookup
             }
         }
 
-        // map-backed?
         if (isset($this->maps[$pair])) {
             $map = $this->maps[$pair];
             if (isset($map[$key])) {
@@ -170,7 +188,6 @@ final class StarDictLookup
 
     private function cleanVal(string $bytes): string
     {
-        // Remove control chars, strip tags, collapse whitespace
         $s = \preg_replace('~[\x00-\x08\x0B\x0C\x0E-\x1F]~u', '', $bytes) ?? $bytes;
         if (!\mb_check_encoding($s, 'UTF-8')) {
             $s = \mb_convert_encoding($s, 'UTF-8', 'ISO-8859-1');
@@ -183,7 +200,7 @@ final class StarDictLookup
     private function ensurePairReady(string $pair): void
     {
         if (isset($this->skoro[$pair]) || isset($this->maps[$pair])) {
-            return; // already prepared
+            return;
         }
 
         $row = $this->repo->findOneBy(['name' => $pair]);
@@ -191,7 +208,6 @@ final class StarDictLookup
             throw new \RuntimeException("No StarDict release for '$pair' (run: bin/console app:load).");
         }
 
-        // Ensure files on disk
         $dir = $this->svc->ensureStarDictReady($pair, $row->bestUrl);
         $ifo  = $this->svc->findFirst($dir, '/\.ifo$/i');
         if (!$ifo) {
@@ -204,7 +220,6 @@ final class StarDictLookup
 
         $this->meta[$pair] = ['bits' => $bits, 'version' => $version, 'bookname' => $book];
 
-        // Classic 2.4.2 + 32-bit → use skoro library
         if ($version === '2.4.2' && $bits === 32) {
             $idx = $this->svc->ensureIdxPath(\dirname($ifo));
             $dictAny = $this->svc->ensureDictPath(\dirname($ifo), false); // allow .dict.dz
@@ -212,18 +227,12 @@ final class StarDictLookup
             return;
         }
 
-        // Fallback: v3 or other → build in-memory index map and use plain .dict
         $idx = $this->svc->ensureIdxPath(\dirname($ifo));
         $dictPlain = $this->svc->ensureDictPath(\dirname($ifo), true); // force .dict
         $this->dictPath[$pair] = $dictPlain;
         $this->maps[$pair] = $this->buildIndexMap($idx, $bits);
     }
 
-    /**
-     * Build an associative map from an .idx file:
-     *  word (UTF-8, NUL-terminated) => [off, size]
-     *  - Handles 32-bit and 64-bit offsets (big-endian as per spec).
-     */
     private function buildIndexMap(string $idxPath, int $bits): array
     {
         $map = [];
@@ -233,27 +242,23 @@ final class StarDictLookup
         }
         try {
             while (!\feof($f)) {
-                // Read headword
                 $head = '';
                 while (!\feof($f)) {
                     $ch = \fread($f, 1);
                     if ($ch === '' || $ch === false) { $head = ''; break; }
                     if (\ord($ch) === 0) break;
                     $head .= $ch;
-                    if (\strlen($head) > 10000) break; // guard against corruption
+                    if (\strlen($head) > 10000) break;
                 }
-                if ($head === '') {
-                    break;
-                }
+                if ($head === '') break;
 
-                // Read offset + size (big-endian, spec)
                 if ($bits === 64) {
                     $ob = \fread($f, 8);
                     $sb = \fread($f, 4);
                     if ($ob === false || $sb === false) break;
                     $off = $this->uInt64be($ob);
                     $size = $this->uInt32be($sb);
-                } else { // 32-bit
+                } else {
                     $ob = \fread($f, 4);
                     $sb = \fread($f, 4);
                     if ($ob === false || $sb === false) break;
@@ -261,7 +266,6 @@ final class StarDictLookup
                     $size = $this->uInt32be($sb);
                 }
 
-                // Store first value (if duplicates exist, keep the first)
                 if (!isset($map[$head])) {
                     $map[$head] = ['off' => $off, 'size' => $size];
                 }
@@ -285,7 +289,6 @@ final class StarDictLookup
         $bytes = \str_pad($bytes, 8, "\0", STR_PAD_RIGHT);
         $hi = \unpack('Nn', \substr($bytes, 0, 4))['n'] ?? 0;
         $lo = \unpack('Nn', \substr($bytes, 4, 4))['n'] ?? 0;
-        // 64-bit safe combine
         return (int)($hi * 4294967296 + $lo);
     }
 }

@@ -16,7 +16,7 @@ use Symfony\Component\Intl\Languages;
 
 final class LibreUiController extends AbstractController
 {
-    /** Map a few common ISO-639-3 → 2 codes to placate symfony/intl (add as needed). */
+    /** Map a few common ISO-639-3 → 2 codes to placate symfony/intl. */
     private const ISO3_TO_2 = [
         'eng' => 'en', 'deu' => 'de', 'ger' => 'de', 'fra' => 'fr', 'fre' => 'fr',
         'spa' => 'es', 'ita' => 'it', 'por' => 'pt', 'cat' => 'ca', 'afr' => 'af',
@@ -30,36 +30,28 @@ final class LibreUiController extends AbstractController
     ) {}
 
     #[Route(path: '/', name: 'libre_ui', methods: ['GET'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $codes = $this->lookup->availableLanguageCodes();
         $languages = $this->codesToNames($codes);
 
-        return $this->render('libre/index.html.twig', [
-            'languages' => $languages,
-        ]);
-    }
+        $q        = (string)$request->query->get('q', '');
+        $source   = (string)$request->query->get('source', '');
+        $target   = (string)$request->query->get('target', '');
+        $viaHttp  = (bool)$request->query->get('via_http', false);
+        $useRules = (bool)$request->query->get('use_rules', false);
 
-    #[Route(path: '/ui/translate', name: 'libre_ui_translate', methods: ['POST'])]
-    public function translate(Request $request): Response
-    {
-        $q        = (string)$request->request->get('q', '');
-        $source   = (string)$request->request->get('source', '');
-        $target   = (string)$request->request->get('target', '');
-        $viaHttp  = (bool)$request->request->get('via_http', false);
-        $useRules = (bool)$request->request->get('use_rules', false);
-
-        $error = null;
         $translatedText = null;
+        $error = null;
 
-        if ($q === '' || $source === '' || $target === '') {
-            $error = 'Please provide text, source, and target.';
-        } else {
+        if ($q !== '' && $source !== '' && $target !== '') {
             try {
                 if ($viaHttp) {
                     $resp = $this->http->request('POST', '/translate', [
                         'json' => [
-                            'q' => $q, 'source' => $source, 'target' => $target,
+                            'q' => $q,
+                            'source' => $source,
+                            'target' => $target,
                             'mode' => $useRules ? 'rules' : 'text',
                         ],
                         'timeout' => 20,
@@ -82,17 +74,14 @@ final class LibreUiController extends AbstractController
             }
         }
 
-        $codes = $this->lookup->availableLanguageCodes();
-        $languages = $this->codesToNames($codes);
-
         return $this->render('libre/index.html.twig', [
-            'languages' => $languages,
-            'prev_q' => $q,
-            'prev_source' => $source,
-            'prev_target' => $target,
+            'languages'      => $languages,
+            'prev_q'         => $q,
+            'prev_source'    => $source,
+            'prev_target'    => $target,
             'translatedText' => $translatedText,
-            'error' => $error,
-            'prev_via_http' => $viaHttp ? 1 : 0,
+            'error'          => $error,
+            'prev_via_http'  => $viaHttp ? 1 : 0,
             'prev_use_rules' => $useRules ? 1 : 0,
         ]);
     }
@@ -106,24 +95,12 @@ final class LibreUiController extends AbstractController
             try {
                 $name = Languages::getName($c);
             } catch (MissingResourceException) {
-                // try 3→2 map
                 $alpha2 = self::ISO3_TO_2[\strtolower($c)] ?? null;
                 if ($alpha2) {
-                    try {
-                        $name = Languages::getName($alpha2);
-                    } catch (\Throwable) {
-                        $name = null;
-                    }
+                    try { $name = Languages::getName($alpha2); } catch (\Throwable) { $name = null; }
                 }
-            } catch (\Throwable) {
-                // ignore
-            }
-
-            if (!$name) {
-                $name = \strtoupper($c);
-            }
-
-            $out[$c] = $name;
+            } catch (\Throwable) {}
+            $out[$c] = $name ?: \strtoupper($c);
         }
         \asort($out, SORT_NATURAL | SORT_FLAG_CASE);
         return $out;

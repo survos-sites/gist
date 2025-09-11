@@ -27,7 +27,8 @@ final class RuleTranslatorService
         }
 
         // tokenize preserving delimiters
-        $parts = \preg_split('~(\p{L}+)~u', $text, -1, \PREG_SPLIT_DELIM_CAPTURE);
+        $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
         if ($parts === false) {
             return $this->lookup->translateWordByWord($src, $dst, $text);
         }

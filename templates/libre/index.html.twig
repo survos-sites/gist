@@ -1,100 +1,105 @@
-{# templates/libre/index.html.twig #}
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>FreeDict Translate (speed > quality)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    :root { --gap: 12px; --pad: 14px; --bg: #f8fafc; --card:#fff; --muted:#64748b; --border:#e2e8f0; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans"; background: var(--bg); color:#0f172a; }
-    .wrap { max-width: 980px; margin: 40px auto; padding: 0 var(--pad); }
-    .card { background: var(--card); border:1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
-    .header { padding: 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;}
-    .title { font-size: 20px; font-weight: 700; }
-    .muted { color: var(--muted); font-size: 14px; }
-    form { display: grid; gap: var(--gap); padding: 20px; }
-    .row { display: grid; gap: var(--gap); grid-template-columns: 1fr 1fr; }
-    textarea { width:100%; min-height: 180px; padding: var(--pad); font: inherit; border-radius: 10px; border:1px solid var(--border); }
-    select, button, input[type="text"] { padding: 10px 12px; font: inherit; border-radius: 10px; border:1px solid var(--border); background:#fff; }
-    button { cursor: pointer; font-weight:600; }
-    .actions { display:flex; gap: var(--gap); align-items:center; flex-wrap: wrap; }
-    .result { white-space: pre-wrap; background:#0f172a; color:#e2e8f0; padding:18px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .error { color:#b91c1c; font-weight:600; }
-    .footer { padding: 14px 20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; color: var(--muted); font-size: 13px; }
-    .toggle { display:flex; align-items:center; gap:8px; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <div class="header">
-        <div class="title">FreeDict Translate</div>
-        <div class="muted">Word-by-word • StarDict • Fast & rough</div>
+{% extends 'base.html.twig' %}
+
+{% block title %}Translator{% endblock %}
+
+{% block body %}
+<div class="page-body">
+  <div class="container-xl">
+    <div class="row row-cards">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Translate (FreeDict)</h3>
+            <div class="card-actions">
+              <a class="btn btn-outline-secondary" href="{{ path('status_dashboard') }}">Dashboard</a>
+            </div>
+          </div>
+          <div class="card-body">
+            <form action="{{ path('libre_ui') }}" method="get" class="row g-3">
+              <div class="col-12 col-md-5">
+                <label class="form-label">Source</label>
+                <select class="form-select" name="source" id="source">
+                  {% for code, name in languages %}
+                    <option value="{{ code }}" {{ code == (prev_source ?? '') ? 'selected' : '' }}>
+                      {{ name }} ({{ code }})
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-md-2 d-flex align-items-end justify-content-center">
+                <button type="button" id="swapBtn" class="btn btn-outline-secondary mt-2" title="Swap languages">⟷</button>
+              </div>
+              <div class="col-12 col-md-5">
+                <label class="form-label">Target</label>
+                <select class="form-select" name="target" id="target">
+                  {% for code, name in languages %}
+                    <option value="{{ code }}" {{ code == (prev_target ?? '') ? 'selected' : '' }}>
+                      {{ name }} ({{ code }})
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Text</label>
+                <textarea class="form-control" name="q" rows="3" placeholder="Enter text to translate">{{ prev_q ?? '' }}</textarea>
+              </div>
+
+              <div class="col-12 d-flex align-items-center gap-3">
+                <label class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="use_rules" value="1" {{ (prev_use_rules ?? 0) ? 'checked' : '' }}>
+                  <span class="form-check-label">Use simple rules (en→es articles)</span>
+                </label>
+
+                <label class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="via_http" value="1" {{ (prev_via_http ?? 0) ? 'checked' : '' }}>
+                  <span class="form-check-label">Call internal API (/translate)</span>
+                </label>
+
+                <button type="submit" class="btn btn-primary ms-auto">Translate</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
 
-      <form action="{{ path('libre_ui_translate') }}" method="post">
-        <div class="row">
-          <label>
-            <div class="muted">Source language</div>
-            <select name="source" required>
-              {% for code, name in languages %}
-                <option value="{{ code }}" {{ code == (prev_source ?? 'eng') ? 'selected' : '' }}>{{ name }} ({{ code }})</option>
-              {% endfor %}
-            </select>
-          </label>
-
-          <label>
-            <div class="muted">Target language</div>
-            <select name="target" required>
-              {% for code, name in languages %}
-                <option value="{{ code }}" {{ code == (prev_target ?? 'deu') ? 'selected' : '' }}>{{ name }} ({{ code }})</option>
-              {% endfor %}
-            </select>
-          </label>
+      {% if translatedText is not empty or error is not empty %}
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Result</h3></div>
+          <div class="card-body">
+            {% if error %}
+              <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            {% if translatedText %}
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Source</label>
+                  <div class="card card-sm"><div class="card-body"><div class="text-muted">{{ prev_q ?? '' }}</div></div></div>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label">Translation</label>
+                  <div class="card card-sm"><div class="card-body"><div>{{ translatedText }}</div></div></div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="card-footer d-flex">
+            <a href="{{ path('status_dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+          </div>
         </div>
-
-        <label>
-          <div class="muted">Text</div>
-          <textarea name="q" placeholder="Type or paste text…" required>{{ prev_q ?? '' }}</textarea>
-        </label>
-
-        <div class="actions">
-          <button type="submit">Translate</button>
-
-          <label class="toggle" title="If checked, calls the HTTP /translate endpoint instead of the local service">
-            <input type="checkbox" name="via_http" value="1" {{ (prev_via_http ?? 0) ? 'checked' : '' }}>
-            Use HTTP API
-          </label>
-
-          <label class="toggle" title="Rule-based layer (articles/plurals) over word-by-word lookup">
-            <input type="checkbox" name="use_rules" value="1" {{ (prev_use_rules ?? 0) ? 'checked' : '' }}>
-            Use rules mode
-          </label>
-
-          {% if error is defined and error %}
-            <div class="error">Error: {{ error }}</div>
-          {% endif %}
-        </div>
-      </form>
-
-      <div class="footer">
-        <div>Modes: plain word-by-word (default) or rules (articles + basic plurals).</div>
-        <div>API: <code>POST /translate</code> with <code>{"mode":"rules"}</code> for rules.</div>
       </div>
+      {% endif %}
     </div>
-
-    {% if translatedText is defined %}
-      <div style="height:12px"></div>
-      <div class="card">
-        <div class="header">
-          <div class="title">Result</div>
-          <div class="muted">Speed > quality. Unknown words remain unchanged.</div>
-        </div>
-        <div class="result">{{ translatedText }}</div>
-      </div>
-    {% endif %}
-
   </div>
-</body>
-</html>
+</div>
+
+<script>
+document.getElementById('swapBtn')?.addEventListener('click', function() {
+  const s = document.getElementById('source');
+  const t = document.getElementById('target');
+  if (!s || !t) return;
+  const sv = s.value; s.value = t.value; t.value = sv;
+});
+</script>
+{% endblock %}
