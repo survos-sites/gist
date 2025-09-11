@@ -66,22 +66,14 @@
       {% if translatedText is not empty or error is not empty %}
       <div class="col-12">
         <div class="card">
-          <div class="card-header"><h3 class="card-title">Result</h3></div>
+          <div class="card-header"><h3 class="card-title">Word-for-word</h3></div>
           <div class="card-body">
             {% if error %}
               <div class="alert alert-danger">{{ error }}</div>
             {% endif %}
             {% if translatedText %}
-              <div class="row g-3">
-                <div class="col-12 col-md-6">
-                  <label class="form-label">Source</label>
-                  <div class="card card-sm"><div class="card-body"><div class="text-muted">{{ prev_q ?? '' }}</div></div></div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <label class="form-label">Translation</label>
-                  <div class="card card-sm"><div class="card-body"><div>{{ translatedText }}</div></div></div>
-                </div>
-              </div>
+              <textarea class="form-control" rows="3" readonly>{{ translatedText }}</textarea>
+              <small class="text-muted">Copy/paste friendly translation (no IPA/markup).</small>
             {% endif %}
           </div>
           <div class="card-footer d-flex">

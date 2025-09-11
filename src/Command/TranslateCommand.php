@@ -35,9 +35,7 @@ final class TranslateCommand
         int $defMax = 120
     ): int {
         try {
-            // Tokenize preserving delimiters so we can rebuild the final string
             $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-
             if ($parts === false) {
                 $io->error('Tokenizer failed.');
                 return 1;
@@ -46,60 +44,43 @@ final class TranslateCommand
             $rows = [];
             $wordCount = 0;
             $hitCount  = 0;
-
             $out = '';
 
-            // Build a clean translation token-by-token
             for ($i = 0; $i < \count($parts); $i++) {
                 $chunk = $parts[$i];
                 if ($chunk === '') continue;
 
                 if (\preg_match('~^\p{L}+$~u', $chunk) !== 1) {
-                    // punctuation/space
-                    $out .= $chunk;
+                    $out .= $chunk; // punctuation / whitespace
                     continue;
                 }
 
                 $wordCount++;
 
-                // Raw token translation (may be a full gloss)
                 $rawTr  = $this->lookup->translateWordDirect($source, $target, $chunk);
                 $bonus  = $this->lookup->lookupOne($source, $target, $chunk) ?? '';
 
-                // Heuristic simplification: pull a headword-ish token from the gloss
-                $simple = $this->simplifyGlossToHeadword($rawTr, $target);
+                $simple = $this->simplifyGlossToHeadword($rawTr, $target, $chunk);
                 if ($simple !== null && $simple !== '') {
                     $out .= $simple;
-                    if ($simple !== $chunk) {
-                        $hitCount++;
-                    }
+                    if ($simple !== $chunk) { $hitCount++; }
                 } else {
-                    // If simplification failed and rawTr is a single word, use it; else keep source token
-                    $out .= (\preg_match('~^\p{L}+$~u', $rawTr) === 1) ? $rawTr : $chunk;
-                    if ($rawTr !== $chunk) {
-                        $hitCount++;
-                    }
+                    $fallback = (\preg_match('~^\p{L}+$~u', $rawTr) === 1) ? $rawTr : $chunk;
+                    $out .= $fallback;
+                    if ($fallback !== $chunk) { $hitCount++; }
                 }
 
-                // Clean the definition for the table
                 $def = $this->cleanDefinition($bonus);
                 if ($defMax > 0 && \mb_strlen($def) > $defMax) {
                     $def = \mb_substr($def, 0, $defMax) . '…';
                 }
 
-                $rows[] = [
-                    $chunk,
-                    '→',
-                    $this->lastAddedToken($out), // the clean token we just appended
-                    $def,
-                ];
+                $rows[] = [$chunk, '→', $this->lastAddedToken($out), $def];
             }
 
-            // 1) Full translated string (clean)
             $io->writeln($out);
             $io->newLine();
 
-            // 2) Per-word table
             if ($rows) {
                 $io->section('Per-word details');
                 $io->table(['Word', '', 'Translation', 'Definition (bonus)'], $rows);
@@ -107,7 +88,6 @@ final class TranslateCommand
                 $io->note('No letter tokens detected in input.');
             }
 
-            // 3) Stats
             $io->section('Stats');
             $hitRate = $wordCount > 0 ? \sprintf('%.1f%%', ($hitCount / $wordCount) * 100) : '—';
             $io->listing([
@@ -143,7 +123,6 @@ final class TranslateCommand
         }
     }
 
-    /** Extract the last token we appended to $out (for the table display). */
     private function lastAddedToken(string $out): string
     {
         if ($out === '') return '';
@@ -153,46 +132,31 @@ final class TranslateCommand
         return '';
     }
 
-    /** Convert possibly-2-letter codes to ISO-639-3 for pair stats, keep originals too. */
     private function normalizeCodes(string $src, string $dst): array
     {
-        $map = [
-            'en' => 'eng', 'es' => 'spa', 'fr' => 'fra', 'de' => 'deu', 'it' => 'ita',
-            'pt' => 'por', 'nl' => 'nld', 'ar' => 'ara', 'ca' => 'cat', 'af' => 'afr',
-        ];
+        $map = ['en'=>'eng','es'=>'spa','fr'=>'fra','de'=>'deu','it'=>'ita','pt'=>'por','nl'=>'nld','ar'=>'ara','ca'=>'cat','af'=>'afr'];
         $src2 = \strtolower(\trim($src));
         $dst2 = \strtolower(\trim($dst));
         return [
-            'src2' => $src2,
-            'dst2' => $dst2,
-            'src3' => \strlen($src2) === 3 ? $src2 : ($map[$src2] ?? $src2),
-            'dst3' => \strlen($dst2) === 3 ? $dst2 : ($map[$dst2] ?? $dst2),
+            'src2'=>$src2, 'dst2'=>$dst2,
+            'src3'=>\strlen($src2)===3 ? $src2 : ($map[$src2]??$src2),
+            'dst3'=>\strlen($dst2)===3 ? $dst2 : ($map[$dst2]??$dst2),
         ];
     }
 
-    /**
-     * Return DB stats for a pair (lemmas & edges) + dictionary release info.
-     * Fixed SQL (CROSS JOIN) so Postgres is happy.
-     * @return array{src_lemmas:int,dst_lemmas:int,edges:int,version:string|null,date:string|null}|null
-     */
     private function pairStats(string $src3, string $dst3): ?array
     {
         $conn = $this->em->getConnection();
 
-        // lookup language ids
         $lang = $conn->fetchAssociative(<<<SQL
             SELECT ls.id AS src_id, ld.id AS dst_id
             FROM lang ls
             CROSS JOIN lang ld
             WHERE ls.code3 = :src AND ld.code3 = :dst
-        SQL, ['src' => $src3, 'dst' => $dst3]);
+        SQL, ['src'=>$src3,'dst'=>$dst3]);
+        if (!$lang) return null;
 
-        if (!$lang) {
-            return null;
-        }
-
-        $srcId = (int)$lang['src_id'];
-        $dstId = (int)$lang['dst_id'];
+        $srcId = (int)$lang['src_id']; $dstId = (int)$lang['dst_id'];
 
         $counts = $conn->fetchAssociative(<<<SQL
             SELECT
@@ -206,7 +170,7 @@ final class TranslateCommand
                 WHERE sl.language_id = :src
                   AND dl.language_id = :dst
               ) AS edges
-        SQL, ['src' => $srcId, 'dst' => $dstId]);
+        SQL, ['src'=>$srcId,'dst'=>$dstId]);
 
         $dict = $conn->fetchAssociative(<<<SQL
             SELECT d.release_version, d.release_date
@@ -214,75 +178,93 @@ final class TranslateCommand
             WHERE d.src_id = :src AND d.dst_id = :dst
             ORDER BY d.id ASC
             LIMIT 1
-        SQL, ['src' => $srcId, 'dst' => $dstId]);
+        SQL, ['src'=>$srcId,'dst'=>$dstId]);
 
         return [
-            'src_lemmas' => (int)($counts['src_lemmas'] ?? 0),
-            'dst_lemmas' => (int)($counts['dst_lemmas'] ?? 0),
-            'edges'      => (int)($counts['edges'] ?? 0),
-            'version'    => $dict['release_version'] ?? null,
-            'date'       => $dict['release_date'] ?? null,
+            'src_lemmas'=>(int)($counts['src_lemmas']??0),
+            'dst_lemmas'=>(int)($counts['dst_lemmas']??0),
+            'edges'=>(int)($counts['edges']??0),
+            'version'=>$dict['release_version']??null,
+            'date'=>$dict['release_date']??null,
         ];
     }
 
-    /** Strip IPA / slashes / HTML and collapse whitespace; keep a compact, human definition. */
     private function cleanDefinition(string $s): string
     {
         if ($s === '') return '';
-        // remove IPA groups like /.../ or [...] at start
-        $s = \preg_replace('~^(\s*(/[^\n/]+/|\[[^\]]+\])\s*,?)+~u', '', $s) ?? $s;
-        // strip HTML tags and control chars
+        $s = \preg_replace('~(/[^/]+/|\[[^\]]+\])~u', ' ', $s) ?? $s;
         $s = \strip_tags($s);
         $s = \preg_replace('~[\x00-\x08\x0B\x0C\x0E-\x1F]~u', '', $s) ?? $s;
-        // collapse whitespace
         $s = \preg_replace('~\s+~u', ' ', $s) ?? $s;
         return \trim($s);
     }
 
     /**
-     * Try to reduce a StarDict gloss into a single headword-ish token for the target language.
-     * Heuristics:
-     *  - Drop IPA (/.../, [...])
-     *  - Remove obvious English POS words: noun|verb|adj|adv|prep|det|pron|interj
-     *  - Split on non-letters, scan for plausible tokens (2..40 chars)
-     *  - For Spanish, prefer a small set of common function words if present (en, a, de, con, por, para, el, la, los, las, un, una, unos, unas, y, o)
-     *  - Otherwise pick the last plausible token (often where WikDict/StarDict append the translation)
+     * Two-pass headword simplifier:
+     *  1) Clean gloss → tokens
+     *  2) If any preferred Spanish function word appears (en, a, de, …), pick it
+     *  3) Else pick the last non-junk token (WikDict/StarDict often puts the headword last)
      */
-    private function simplifyGlossToHeadword(string $gloss, string $target): ?string
+    private function simplifyGlossToHeadword(string $gloss, string $target, string $srcToken): ?string
     {
         if ($gloss === '') return null;
 
-        // remove IPA and tags
-        $s = \preg_replace('~(/[^/]+/|\[[^\]]+\])~u', ' ', $gloss) ?? $gloss;
+        $t = \strtolower($target);
+        $srcLower = \mb_strtolower($srcToken);
+
+        // Special-case EN "the" → default Spanish article "el"
+        if (($t === 'es' || $t === 'spa') && $srcLower === 'the') {
+            return 'el';
+        }
+
+        // Clean: strip tags (even broken), IPA, POS markers; collapse whitespace
+        $s = \preg_replace('~</?[a-z][a-z0-9:-]*[^>]*>~i', ' ', $gloss) ?? $gloss;
+        $s = \strtr($s, ['<' => ' ', '>' => ' ']);
+        $s = \preg_replace('~(/[^/]+/|\[[^\]]+\])~u', ' ', $s) ?? $s;
         $s = \strip_tags($s);
+        $s = \preg_replace('~\b(noun|verb|adjective|adj|adverb|adv|preposition|prep|determiner|det|pronoun|pron|interjection|interj)\b~iu', ' ', $s) ?? $s;
         $s = \preg_replace('~\s+~u', ' ', $s) ?? $s;
         $s = \trim($s);
 
-        // remove common English POS markers to reduce noise
-        $s = \preg_replace('~\b(noun|verb|adjective|adj|adverb|adv|preposition|prep|determiner|det|pronoun|pron|interjection|interj)\b~iu', ' ', $s) ?? $s;
-
-        // collect candidate tokens (letters only)
+        // Candidate tokens (letters only)
         \preg_match_all('~\p{L}{2,40}~u', $s, $m);
         $cands = $m[0] ?? [];
-        if (!$cands) {
-            return null;
+        if (!$cands) return null;
+
+        // Junk words to skip when not selected as "preferred"
+        static $junk = null;
+        if ($junk === null) {
+            $junk = \array_flip([
+                'comp','comparative','superlative','plural','singular','pl','sg',
+                'masc','fem','neut','m','f','n',
+                'of','with','without','having','color','structure','expression','series','scale','position','price','time',
+                'program','demonstration','example','countable','uncountable','often',
+                'a','an','the','at','in','on','to','for','from','by','and','or','as','is','are','be','was','were','this','that','which','who','whom','whose','been','being',
+            ]);
         }
 
-        $t = \strtolower(\trim($target));
+        $isEs = ($t === 'es' || $t === 'spa');
+        $preferredEs = ['el','la','los','las','un','una','unos','unas','en','a','de','con','por','para','y','o'];
 
-        // tiny Spanish shortlist to improve function words
-        if ($t === 'es' || $t === 'spa') {
-            $preferred = ['en','a','de','con','por','para','el','la','los','las','un','una','unos','unas','y','o'];
+        // PASS 1: if any preferred Spanish function word appears anywhere, use it
+        if ($isEs) {
             foreach ($cands as $w) {
                 $lw = \mb_strtolower($w);
-                if (\in_array($lw, $preferred, true)) {
+                if (\in_array($lw, $preferredEs, true)) {
                     return $lw;
                 }
             }
         }
 
-        // Often the last token is the actual translation headword in these dicts
-        $last = (string)\end($cands);
-        return \mb_strtolower($last);
+        // PASS 2: choose the last non-junk token
+        for ($i = \count($cands) - 1; $i >= 0; $i--) {
+            $lw = \mb_strtolower($cands[$i]);
+            if (!isset($junk[$lw])) {
+                return $lw;
+            }
+        }
+
+        // Fallback: last token
+        return \mb_strtolower((string)\end($cands));
     }
 }
