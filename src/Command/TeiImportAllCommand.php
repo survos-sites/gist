@@ -36,20 +36,25 @@ final class TeiImportAllCommand
 
         foreach ($rows as $row) {
             $countPairs++;
-            $raw = $row->raw ?? null;
-            if (!$raw || !\is_array($raw)) {
-                continue;
-            }
-            [$url, $platform] = $this->svc->pickTeiUrl($raw);
+
+            // Only proceed if we can resolve a TEI-friendly URL from THIS ENTITY
+            [$url, $platform] = $this->svc->pickTeiUrl($row);
             if ($url === '') {
                 continue;
             }
 
             $io->title("Importing TEI for {$row->name} ($platform)");
             try {
-                $this->svc->importTei($raw, truncate: $force, limit: $limit, progress: function (int $n) use ($io) {
-                    if ($n % 1000 === 0) $io->writeln("  … $n entries");
-                });
+                $this->svc->importTei(
+                    $row,                     // << pass the entity
+                    truncate: $force,
+                    limit: $limit,
+                    progress: function (int $n) use ($io) {
+                        if ($n % 1000 === 0) {
+                            $io->writeln("  … $n entries");
+                        }
+                    }
+                );
                 $importedPairs++;
             } catch (\Throwable $e) {
                 $io->warning("  Skipped {$row->name}: " . $e->getMessage());

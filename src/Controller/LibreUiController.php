@@ -16,7 +16,7 @@ use Symfony\Component\Intl\Languages;
 
 final class LibreUiController extends AbstractController
 {
-    /** Map a few common ISO‑639‑3 → 2 codes to placate symfony/intl (add as needed). */
+    /** Map a few common ISO-639-3 → 2 codes to placate symfony/intl (add as needed). */
     private const ISO3_TO_2 = [
         'eng' => 'en', 'deu' => 'de', 'ger' => 'de', 'fra' => 'fr', 'fre' => 'fr',
         'spa' => 'es', 'ita' => 'it', 'por' => 'pt', 'cat' => 'ca', 'afr' => 'af',
@@ -76,7 +76,6 @@ final class LibreUiController extends AbstractController
                     $translatedText = $useRules
                         ? $this->rules->translate($source, $target, $q, 'rules')
                         : $this->lookup->translateWordByWord($source, $target, $q);
-                    dd($translatedText, $useRules);
                 }
             } catch (\Throwable $e) {
                 $error = $e->getMessage();

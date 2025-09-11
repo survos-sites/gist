@@ -35,7 +35,7 @@ final class StarDictLookup
     ) {}
 
     /**
-     * Translate text word-by-word, preserving non-letters.
+     * Translate a full string word-by-word, preserving non-letters.
      */
     public function translateWordByWord(string $src, string $dst, string $text): string
     {
@@ -58,6 +58,49 @@ final class StarDictLookup
         }
 
         return $out;
+    }
+
+    /**
+     * Translate a single token. Falls back to original token if not found.
+     */
+    public function translateWordDirect(string $src, string $dst, string $token): string
+    {
+        $pair = "{$src}-{$dst}";
+        $this->ensurePairReady($pair);
+
+        // exact
+        $v = $this->lookup($pair, $token);
+        if ($v !== null) return $v;
+
+        // lower-cased
+        $lower = \mb_strtolower($token);
+        if ($lower !== $token) {
+            $v = $this->lookup($pair, $lower);
+            if ($v !== null) return $v;
+        }
+
+        return $token;
+    }
+
+    /**
+     * Return a cleaned first definition/gloss (best-effort) for a token.
+     * Useful for lightweight heuristics (gender/number).
+     */
+    public function lookupOne(string $src, string $dst, string $token): ?string
+    {
+        $pair = "{$src}-{$dst}";
+        $this->ensurePairReady($pair);
+
+        // try exact then lower
+        $v = $this->lookup($pair, $token);
+        if ($v !== null) return $v;
+
+        $lower = \mb_strtolower($token);
+        if ($lower !== $token) {
+            $v = $this->lookup($pair, $lower);
+            if ($v !== null) return $v;
+        }
+        return null;
     }
 
     /**
@@ -161,7 +204,7 @@ final class StarDictLookup
 
         $this->meta[$pair] = ['bits' => $bits, 'version' => $version, 'bookname' => $book];
 
-        // Fast path: classic 2.4.2 + 32-bit → use skoro library
+        // Classic 2.4.2 + 32-bit → use skoro library
         if ($version === '2.4.2' && $bits === 32) {
             $idx = $this->svc->ensureIdxPath(\dirname($ifo));
             $dictAny = $this->svc->ensureDictPath(\dirname($ifo), false); // allow .dict.dz
