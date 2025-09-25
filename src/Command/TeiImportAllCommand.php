@@ -1,66 +1,90 @@
 <?php
-// src/Command/TeiImportAllCommand.php
 declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\FreeDictCatalog;
 use App\Repository\FreeDictCatalogRepository;
 use App\Service\TeiImportService;
+use DateTimeImmutable;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Attribute\Argument;
-use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Console\Command\InvokableCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Attribute\Option;
 
-#[AsCommand(name: 'app:tei:import:all', description: 'Import TEI for all catalog pairs that publish TEI/src')]
-final class TeiImportAllCommand
+#[AsCommand(name: 'app:tei:import:all', description: 'Import all FreeDict TEI pairs that are not yet imported.')]
+class TeiImportAllCommand extends InvokableCommand
 {
     public function __construct(
-        private readonly FreeDictCatalogRepository $catalog,
-        private readonly TeiImportService $svc,
-    ) {}
+        private FreeDictCatalogRepository $catalogRepo,
+        private TeiImportService $importer,
+    ) {
+        parent::__construct();
+    }
 
     public function __invoke(
         SymfonyStyle $io,
-        #[Argument('Import all TEI-capable dictionaries (ignores pairs without TEI/src)')]
-        ?string $noop = null,
-        #[Option('Force reimport (truncate edges) for each pair', shortcut: 'f')]
-        bool $force = false,
-        #[Option('Limit number of entries per pair (testing)', shortcut: 'L')]
-        ?int $limit = null,
-        #[Option('Max number of pairs to import (0 = no limit)', shortcut: 'M')]
-        int $maxPairs = 0
+        #[Option('force')] bool $force = false,
+        #[Option('limit')] ?int $limit = null,
+        #[Option('max-pairs')] ?int $maxPairs = null,
+        InputInterface $input = null,
+        OutputInterface $output = null,
     ): int {
-        $rows = $this->catalog->findBy([], ['name' => 'ASC']);
-        $countPairs = 0;
-        $importedPairs = 0;
+        $io->title('FreeDict: Import All');
 
-        foreach ($rows as $row) {
-            $countPairs++;
-            $raw = $row->raw ?? null;
-            if (!$raw || !\is_array($raw)) {
-                continue;
-            }
-            [$url, $platform] = $this->svc->pickTeiUrl($raw);
-            if ($url === '') {
-                continue;
-            }
+        $limit ??= 0; // 0 = no limit
+        $candidates = $this->catalogRepo->findImportCandidates(limit: $limit);
 
-            $io->title("Importing TEI for {$row->name} ($platform)");
-            try {
-                $this->svc->importTei($raw, truncate: $force, limit: $limit, progress: function (int $n) use ($io) {
-                    if ($n % 1000 === 0) $io->writeln("  … $n entries");
-                });
-                $importedPairs++;
-            } catch (\Throwable $e) {
-                $io->warning("  Skipped {$row->name}: " . $e->getMessage());
-            }
-
-            if ($maxPairs && ($importedPairs >= $maxPairs)) {
-                break;
-            }
+        if (!$candidates) {
+            $io->success('No catalogs found.');
+            return self::SUCCESS;
         }
 
-        $io->success("Imported $importedPairs pair(s) (scanned $countPairs).");
-        return 0;
+        $io->writeln(sprintf('Found %d catalog(s).%s', count($candidates), $force ? ' (forcing reimport)' : ''));
+        $progress = $io->createProgressBar(count($candidates));
+        $progress->start();
+
+        $imported = 0;
+        $skipped  = 0;
+        $failed   = 0;
+
+        foreach ($candidates as $catalog) {
+            \assert($catalog instanceof FreeDictCatalog);
+
+            if (!$force && $catalog->importedAt) {
+                $skipped++;
+                $progress->advance();
+                continue;
+            }
+
+            try {
+                $teiUrl = $this->importer->pickTeiUrl($catalog);
+                $stats  = $this->importer->importPair($catalog, $teiUrl, $maxPairs);
+
+                // Mark as imported (or at least “attempted”)
+                $catalog->importedAt = new DateTimeImmutable();
+                $catalog->importStatus = 'imported';
+                $catalog->importMessage = sprintf('ok: %s', json_encode($stats, JSON_UNESCAPED_SLASHES));
+
+                $imported++;
+            } catch (\Throwable $e) {
+                $catalog->importStatus = 'failed';
+                $catalog->importMessage = $e->getMessage();
+                $failed++;
+            }
+
+            // Flush in small batches to keep memory low
+            $this->catalogRepo->save($catalog, true);
+            $progress->advance();
+        }
+
+        $progress->finish();
+        $io->newLine(2);
+
+        $io->success(sprintf('Done. Imported: %d, Skipped: %d, Failed: %d', $imported, $skipped, $failed));
+
+        return $failed ? self::FAILURE : self::SUCCESS;
     }
 }
