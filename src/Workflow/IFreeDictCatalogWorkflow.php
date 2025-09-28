@@ -2,12 +2,13 @@
 
 namespace App\Workflow;
 
-use Survos\WorkflowBundle\Attribute\Place;
-use Survos\WorkflowBundle\Attribute\Transition;
+use Survos\StateBundle\Attribute\Place;
+use Survos\StateBundle\Attribute\Transition;
 
-interface IFreeDictCatalogWorkflow
+#[Workflow(supports: [FreeDictCatalog::class], name: self::WORKFLOW_NAME)]
+class IFreeDictCatalogWorkflow
 {
-	public const WORKFLOW_NAME = 'FreeDictCatalogWorkflow';
+    public const WORKFLOW_NAME = 'FreeDictCatalogWorkflow';
 
 	#[Place(initial: true)]
 	public const PLACE_NEW = 'new';
