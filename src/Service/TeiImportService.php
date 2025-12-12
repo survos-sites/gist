@@ -65,6 +65,7 @@ final class TeiImportService
         }
     }
 
+    /** Return [url, platform] for the newest TEI-capable release (tei|src) */
     public function pickTeiUrl(FreeDictCatalog $catalog): array
     {
         $releases = $catalog->raw['releases'] ?? [];
@@ -149,9 +150,13 @@ final class TeiImportService
         return null;
     }
 
-    public function importTei(FreeDictCatalog $catalog, bool $truncate = false, ?int $limit = null, ?callable $progress = null): Dictionary
-    {
-        $this->refreshManagers(); /// ?
+    public function importTei(
+        FreeDictCatalog $catalog,
+        bool $truncate = false,
+        ?int $limit = null,
+        ?callable $progress = null
+    ): Dictionary {
+        $this->refreshManagers();
 
         $pair = $catalog->name;
         if ($pair === '' || !\str_contains($pair, '-')) {
@@ -169,8 +174,11 @@ final class TeiImportService
         $dict->name = $pair;
         $dict->src = $src;
         $dict->dst = $dst;
-        $dict->edition = (string)($catalogItem['edition'] ?? '') ?: null;
-        $dict->releaseVersion = (string)($catalogItem['edition'] ?? '') ?: null;
+
+        // copy some catalog metadata onto Dictionary for convenience
+        $dict->edition        = $catalog->edition;
+        $dict->releaseVersion = $catalog->releaseVersion;
+        $dict->releaseDate    = $catalog->releaseDate;
 
         [$teiUrl] = $this->pickTeiUrl($catalog);
         if ($teiUrl === '') {
@@ -229,7 +237,7 @@ final class TeiImportService
             $senseTexts = $this->texts($xp, '//tei:sense/tei:def | //tei:sense/tei:gloss');
             $rank = 1;
             foreach ($senseTexts as $gloss) {
-                $s = new \App\Entity\Sense();
+                $s = new Sense();
                 $s->lemma = $lemma;
                 $s->gloss = $this->clean($gloss);
                 $s->rank = $rank++;
@@ -242,7 +250,6 @@ final class TeiImportService
                 $tw = \trim($tw);
                 if ($tw === '') continue;
                 $tLemma = $this->lemmaRepo->upsert($dst, $tw, null, null, null);
-                dd($tLemma);
 
                 $exists = $this->transRepo->findOneBy(['srcLemma' => $lemma, 'dstLemma' => $tLemma]);
                 if (!$exists) {
@@ -258,7 +265,7 @@ final class TeiImportService
             if ($batch % 1000 === 0) {
                 try { $this->safeFlush(); }
                 catch (UniqueConstraintViolationException) { /* ignore dup races */ }
-                catch (\Throwable) { /* logged upstream if needed */ }
+                catch (\Throwable) { /* swallow; next loop will re-open EM */ }
 
                 $this->em->clear();
                 $this->refreshManagers();

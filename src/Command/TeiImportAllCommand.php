@@ -9,19 +9,17 @@ use App\Service\TeiImportService;
 use DateTimeImmutable;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Command\InvokableCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\Option;
 
 #[AsCommand(name: 'app:tei:import:all', description: 'Import all FreeDict TEI pairs that are not yet imported.')]
-class TeiImportAllCommand extends InvokableCommand
+class TeiImportAllCommand
 {
     public function __construct(
         private FreeDictCatalogRepository $catalogRepo,
         private TeiImportService $importer,
     ) {
-        parent::__construct();
     }
 
     public function __invoke(
@@ -40,6 +38,37 @@ class TeiImportAllCommand extends InvokableCommand
         if (!$candidates) {
             $io->success('No catalogs found.');
             return self::SUCCESS;
+        }
+
+        foreach ($rows as $row) {
+            $countPairs++;
+
+            // Only proceed if we can resolve a TEI-friendly URL from THIS ENTITY
+            [$url, $platform] = $this->svc->pickTeiUrl($row);
+            if ($url === '') {
+                continue;
+            }
+
+            $io->title("Importing TEI for {$row->name} ($platform)");
+            try {
+                $this->svc->importTei(
+                    $row,                     // << pass the entity
+                    truncate: $force,
+                    limit: $limit,
+                    progress: function (int $n) use ($io) {
+                        if ($n % 1000 === 0) {
+                            $io->writeln("  … $n entries");
+                        }
+                    }
+                );
+                $importedPairs++;
+            } catch (\Throwable $e) {
+                $io->warning("  Skipped {$row->name}: " . $e->getMessage());
+            }
+
+            if ($maxPairs && ($importedPairs >= $maxPairs)) {
+                break;
+            }
         }
 
         $io->writeln(sprintf('Found %d catalog(s).%s', count($candidates), $force ? ' (forcing reimport)' : ''));

@@ -28,7 +28,8 @@ final class DbLookupService
     {
         [$src, $dst] = [$this->requireLang($srcCode), $this->requireLang($dstCode)];
 
-        $parts = \preg_split('~(\p{L}+)~u', $text, -1, \PREG_SPLIT_DELIM_CAPTURE);
+        $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
         if ($parts === false) {
             return $text;
         }

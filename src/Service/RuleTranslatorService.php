@@ -12,11 +12,7 @@ namespace App\Service;
  *  - If source token is 'a'/'an' and next token resolves to a Spanish noun with gender/number,
  *      choose 'un/una/unos/unas' accordingly.
  *  - If source token is 'the', choose 'el/la/los/las' accordingly.
- *  - If dict value appears plural (ends with 's' and not 'es' cases), emit plural article.
- *  - Otherwise fall back to StarDictLookup->translateWordByWord() behavior for tokens.
- *
- * Gender detection heuristics:
- *  - Look for ' m ' or ' f ' or tags like '(m.)', '(f.)', 'noun m', 'nf' in the definition snippet.
+ *  - Otherwise fall back to StarDictLookup->translateWordDirect() for tokens.
  */
 final class RuleTranslatorService
 {
@@ -31,7 +27,8 @@ final class RuleTranslatorService
         }
 
         // tokenize preserving delimiters
-        $parts = \preg_split('~(\p{L}+)~u', $text, -1, \PREG_SPLIT_DELIM_CAPTURE);
+        $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
         if ($parts === false) {
             return $this->lookup->translateWordByWord($src, $dst, $text);
         }
@@ -94,17 +91,13 @@ final class RuleTranslatorService
         $s = ' ' . \mb_strtolower($snippet) . ' ';
 
         $gender = null;
-        if (\preg_match('~\b(noun|sust|sustantivo)\b.*\bm\b~', $s) || \preg_match('~\bm\W~', $s)) {
+        if (\preg_match('~\bnm\b~', $s) || \preg_match('~\b(noun|sust|sustantivo)\b.*\bm\b~', $s) || \preg_match('~\bm\W~', $s)) {
             $gender = 'm';
         }
-        if (\preg_match('~\b(noun|sust|sustantivo)\b.*\bf\b~', $s) || \preg_match('~\bf\W~', $s)) {
+        if (\preg_match('~\bnf\b~', $s) || \preg_match('~\b(noun|sust|sustantivo)\b.*\bf\b~', $s) || \preg_match('~\bf\W~', $s)) {
             $gender = 'f';
         }
-        // WikDict short tags often carry 'nm' / 'nf'
-        if (\preg_match('~\bnm\b~', $s)) $gender = 'm';
-        if (\preg_match('~\bnf\b~', $s)) $gender = 'f';
 
-        // crude plural hint: presence of "pl" or headwords ending in 's' is not reliable; rely on the snippet
         $plural = false;
         if (\preg_match('~\b(pl|plural)\b~', $s)) {
             $plural = true;

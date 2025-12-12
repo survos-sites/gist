@@ -21,3 +21,5 @@
 
 ## dokku storage:mount  /mnt/volume-1/project-data/gist:/app/data
 /data
+
+.castor.stub.php
