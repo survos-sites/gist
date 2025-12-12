@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Service\MorphHelper;
 use App\Service\RuleTranslatorService;
 use App\Service\StarDictLookup;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +20,7 @@ final class TranslateCommand
         private readonly StarDictLookup $lookup,
         private readonly RuleTranslatorService $rules,
         private readonly EntityManagerInterface $em,
+        private readonly MorphHelper $morph, // << inject helper
     ) {}
 
     public function __invoke(
@@ -57,30 +59,82 @@ final class TranslateCommand
 
                 $wordCount++;
 
-                $rawTr  = $this->lookup->translateWordDirect($source, $target, $chunk);
-                $bonus  = $this->lookup->lookupOne($source, $target, $chunk) ?? '';
+                // -------- candidate loop (morphology-aware StarDict lookups) --------
+                $cands = $this->morph->candidates($source, $chunk);
+                // ensure original token first even if helper changed order
+                if ($cands[0] ?? '' !== $chunk) { \array_unshift($cands, $chunk); }
 
-                $simple = $this->simplifyGlossToHeadword($rawTr, $target, $chunk);
-                if ($simple !== null && $simple !== '') {
-                    $out .= $simple;
-                    if ($simple !== $chunk) { $hitCount++; }
-                } else {
-                    $fallback = (\preg_match('~^\p{L}+$~u', $rawTr) === 1) ? $rawTr : $chunk;
-                    $out .= $fallback;
-                    if ($fallback !== $chunk) { $hitCount++; }
+                $chosenHead = null;
+                $chosenCand = null;
+                $chosenRaw  = null;
+
+                foreach ($cands as $cand) {
+// Raw gloss (already cleaned by StarDictLookup::cleanVal())
+                    $raw = $this->lookup->translateWordDirect($source, $target, $cand);
+// Try to reduce to headword-ish token
+                    $head = $this->simplifyGlossToHeadword($raw, $target, $cand);
+
+                    if ($io->isVeryVerbose()) {
+                        $io->writeln(sprintf(
+                            '  · [%s] try cand="%s" → raw="%s" → head="%s"',
+                            $chunk,
+                            $cand,
+                            $this->clip($raw, 80),
+                            $head ?? ''
+                        ));
+                    }
+
+                    /**
+                     * Skip “non-result” candidates:
+                     * - If StarDict gave us back the candidate unchanged (raw == cand)
+                     *   AND our headword simplifier also returns the candidate itself,
+                     *   that’s not a translation — keep trying the next candidate.
+                     */
+                    $rawSame  = \mb_strtolower($raw)  === \mb_strtolower($cand);
+                    $headSame = $head !== null && \mb_strtolower($head) === \mb_strtolower($cand);
+
+                    if ($head !== null && $head !== '' && !($rawSame && $headSame)) {
+                        $chosenHead = $head;
+                        $chosenCand = $cand;
+                        $chosenRaw  = $raw;
+                        break;
+                    }
                 }
 
+                // Fallbacks
+                if ($chosenHead === null || $chosenHead === '') {
+                    $raw = $this->lookup->translateWordDirect($source, $target, $chunk);
+                    $head = (\preg_match('~^\p{L}+$~u', $raw) === 1) ? $raw : $chunk;
+                    $chosenHead = $head;
+                    $chosenCand = $chunk;
+                    $chosenRaw  = $raw;
+                }
+
+                if ($io->isVeryVerbose()) {
+                    $io->writeln(sprintf(
+                        '  ✓ [%s] PICK cand="%s" → head="%s"',
+                        $chunk, $chosenCand, $chosenHead
+                    ));
+                }
+
+                $out .= $chosenHead;
+                if ($chosenHead !== $chunk) { $hitCount++; }
+
+                // Bonus definition for the table (first successful candidate’s gloss)
+                $bonus = $chosenRaw ?? $this->lookup->lookupOne($source, $target, $chunk) ?? '';
                 $def = $this->cleanDefinition($bonus);
                 if ($defMax > 0 && \mb_strlen($def) > $defMax) {
                     $def = \mb_substr($def, 0, $defMax) . '…';
                 }
 
-                $rows[] = [$chunk, '→', $this->lastAddedToken($out), $def];
+                $rows[] = [$chunk, '→', $chosenHead, $def];
             }
 
+            // 1) Full translated string (clean)
             $io->writeln($out);
             $io->newLine();
 
+            // 2) Per-word table
             if ($rows) {
                 $io->section('Per-word details');
                 $io->table(['Word', '', 'Translation', 'Definition (bonus)'], $rows);
@@ -88,6 +142,7 @@ final class TranslateCommand
                 $io->note('No letter tokens detected in input.');
             }
 
+            // 3) Stats
             $io->section('Stats');
             $hitRate = $wordCount > 0 ? \sprintf('%.1f%%', ($hitCount / $wordCount) * 100) : '—';
             $io->listing([
@@ -121,15 +176,6 @@ final class TranslateCommand
             $io->error($e->getMessage());
             return 1;
         }
-    }
-
-    private function lastAddedToken(string $out): string
-    {
-        if ($out === '') return '';
-        if (\preg_match('~(\p{L}+)[^\p{L}]*\z~u', $out, $m) === 1) {
-            return (string)$m[1];
-        }
-        return '';
     }
 
     private function normalizeCodes(string $src, string $dst): array
@@ -189,9 +235,12 @@ final class TranslateCommand
         ];
     }
 
+    /** Strip IPA / HTML and collapse whitespace for readable “bonus” defs. */
     private function cleanDefinition(string $s): string
     {
         if ($s === '') return '';
+        $s = \preg_replace('~</?[a-z][a-z0-9:-]*[^>]*>~i', ' ', $s) ?? $s;
+        $s = \strtr($s, ['<' => ' ', '>' => ' ']);
         $s = \preg_replace('~(/[^/]+/|\[[^\]]+\])~u', ' ', $s) ?? $s;
         $s = \strip_tags($s);
         $s = \preg_replace('~[\x00-\x08\x0B\x0C\x0E-\x1F]~u', '', $s) ?? $s;
@@ -201,9 +250,8 @@ final class TranslateCommand
 
     /**
      * Two-pass headword simplifier:
-     *  1) Clean gloss → tokens
-     *  2) If any preferred Spanish function word appears (en, a, de, …), pick it
-     *  3) Else pick the last non-junk token (WikDict/StarDict often puts the headword last)
+     *  1) If any preferred Spanish function word appears anywhere, pick it
+     *  2) Else pick the last non-junk token
      */
     private function simplifyGlossToHeadword(string $gloss, string $target, string $srcToken): ?string
     {
@@ -231,7 +279,20 @@ final class TranslateCommand
         $cands = $m[0] ?? [];
         if (!$cands) return null;
 
-        // Junk words to skip when not selected as "preferred"
+        // Preferred Spanish function words
+        $isEs = ($t === 'es' || $t === 'spa');
+        $preferredEs = ['el','la','los','las','un','una','unos','unas','en','a','de','con','por','para','y','o'];
+
+        if ($isEs) {
+            foreach ($cands as $w) {
+                $lw = \mb_strtolower($w);
+                if (\in_array($lw, $preferredEs, true)) {
+                    return $lw;
+                }
+            }
+        }
+
+        // Junk words to skip when selecting from the end
         static $junk = null;
         if ($junk === null) {
             $junk = \array_flip([
@@ -243,20 +304,7 @@ final class TranslateCommand
             ]);
         }
 
-        $isEs = ($t === 'es' || $t === 'spa');
-        $preferredEs = ['el','la','los','las','un','una','unos','unas','en','a','de','con','por','para','y','o'];
-
-        // PASS 1: if any preferred Spanish function word appears anywhere, use it
-        if ($isEs) {
-            foreach ($cands as $w) {
-                $lw = \mb_strtolower($w);
-                if (\in_array($lw, $preferredEs, true)) {
-                    return $lw;
-                }
-            }
-        }
-
-        // PASS 2: choose the last non-junk token
+        // Choose the last non-junk token
         for ($i = \count($cands) - 1; $i >= 0; $i--) {
             $lw = \mb_strtolower($cands[$i]);
             if (!isset($junk[$lw])) {
@@ -266,5 +314,13 @@ final class TranslateCommand
 
         // Fallback: last token
         return \mb_strtolower((string)\end($cands));
+    }
+
+    /** Clip long debug strings. */
+    private function clip(string $s, int $max): string
+    {
+        $s = \preg_replace('~\s+~u', ' ', $s) ?? $s;
+        $s = \trim($s);
+        return (\mb_strlen($s) > $max) ? (\mb_substr($s, 0, $max) . '…') : $s;
     }
 }

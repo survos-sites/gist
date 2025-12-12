@@ -18,6 +18,7 @@ final class DbLookupService
         private readonly LanguageRepository $langRepo,
         private readonly LemmaRepository $lemmaRepo,
         private readonly TranslationRepository $translationRepo,
+        private readonly MorphHelper $morph, // << new helper
     ) {}
 
     /**
@@ -29,7 +30,6 @@ final class DbLookupService
         [$src, $dst] = [$this->requireLang($srcCode), $this->requireLang($dstCode)];
 
         $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-
         if ($parts === false) {
             return $text;
         }
@@ -53,9 +53,14 @@ final class DbLookupService
     public function lookupOne(string $srcCode, string $dstCode, string $token, int $limit = 5): ?string
     {
         [$src, $dst] = [$this->requireLang($srcCode), $this->requireLang($dstCode)];
-        $defs = $this->lookupAlternates($src, $dst, $token, $limit);
-        if (!$defs) return null;
-        return \implode('; ', $defs);
+
+        foreach ($this->morph->candidates($src->code3, $token) as $cand) {
+            $defs = $this->lookupAlternates($src, $dst, $cand, $limit);
+            if ($defs) {
+                return \implode('; ', $defs);
+            }
+        }
+        return null;
     }
 
     /**
@@ -73,13 +78,15 @@ final class DbLookupService
 
     private function translateToken(Language $src, Language $dst, string $word, int $maxAlternates): string
     {
-        // exact headword → top translation
-        $alts = $this->lookupAlternates($src, $dst, $word, $maxAlternates);
-        if ($alts) {
-            return $alts[0];
+        // Try morphological candidates in order
+        foreach ($this->morph->candidates($src->code3, $word) as $cand) {
+            $alts = $this->lookupAlternates($src, $dst, $cand, $maxAlternates);
+            if ($alts) {
+                return $alts[0];
+            }
         }
 
-        // lowercase fallback
+        // Lowercase fallback (kept for symmetry; MorphHelper already includes lower)
         $lower = \mb_strtolower($word);
         if ($lower !== $word) {
             $alts = $this->lookupAlternates($src, $dst, $lower, $maxAlternates);
@@ -88,7 +95,7 @@ final class DbLookupService
             }
         }
 
-        // (Optional) very light normalization fallback
+        // Light normalization fallback
         $norm = LemmaRepository::normalize($word);
         if ($norm !== $lower) {
             $alts = $this->lookupAlternates($src, $dst, $norm, $maxAlternates);
@@ -102,11 +109,12 @@ final class DbLookupService
 
     /**
      * Return up to $limit target lemma headwords for a src token (ordered by rank then alphabetically).
-     * @return string[]
+     * @return list<string>
      */
     private function lookupAlternates(Language $src, Language $dst, string $token, int $limit): array
     {
         $norm = LemmaRepository::normalize($token);
+
         // Find source lemma by exact headword or normalized headword
         $qb = $this->em->createQueryBuilder();
         $qb->select('le')
@@ -114,7 +122,8 @@ final class DbLookupService
             ->where('le.language = :lang AND (le.headword = :h OR le.norm_headword = :n)')
             ->setMaxResults(5)
             ->setParameters(['lang' => $src->id, 'h' => $token, 'n' => $norm]);
-        /** @var Lemma[] $lemmas */
+
+        /** @var list<Lemma> $lemmas */
         $lemmas = $qb->getQuery()->getResult();
 
         if (!$lemmas) {
@@ -134,6 +143,7 @@ final class DbLookupService
                 ORDER BY COALESCE(t.rank, 100000), ld.headword
                 LIMIT :lim
             SQL, ['srcLemma' => $lemma->id, 'dst' => $dst->id, 'lim' => $limit], ['lim' => \PDO::PARAM_INT]);
+
             foreach ($rows as $r) {
                 $out[] = (string)$r['headword'];
             }
@@ -146,19 +156,22 @@ final class DbLookupService
     private function requireLang(string $code): Language
     {
         $code = \strtolower(\trim($code));
+
         $lang = \strlen($code) === 2
             ? $this->langRepo->findOneBy(['code2' => $code])
             : $this->langRepo->findOneBy(['code3' => $code]);
 
         if (!$lang) {
-            // Try opposite code length if not found
+            // Try the opposite code length as a last resort
             $lang = \strlen($code) === 3
                 ? $this->langRepo->findOneBy(['code2' => \substr($code, 0, 2)])
-                : $this->langRepo->findOneBy(['code3' => $code]); // already tried 2; last hope is 3
+                : $this->langRepo->findOneBy(['code3' => $code]);
         }
+
         if (!$lang) {
             throw new \RuntimeException("Unknown language code: $code");
         }
+
         return $lang;
     }
 }

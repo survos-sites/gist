@@ -59,9 +59,6 @@
             "config/packages/inspector.yaml"
         ]
     },
-    "jwage/phpamqplib-messenger": {
-        "version": "0.8.5"
-    },
     "phpunit/phpunit": {
         "version": "12.3",
         "recipe": {
@@ -86,8 +83,8 @@
     "survos/deployment-bundle": {
         "version": "1.6.44"
     },
-    "survos/workflow-helper-bundle": {
-        "version": "1.6.44"
+    "survos/state-bundle": {
+        "version": "dev-main"
     },
     "symfony/asset-mapper": {
         "version": "7.3",

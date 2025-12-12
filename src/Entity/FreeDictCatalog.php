@@ -7,8 +7,8 @@ namespace App\Entity;
 use App\Workflow\IFreeDictCatalogWorkflow;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\FreeDictCatalogRepository;
-use Survos\WorkflowBundle\Traits\MarkingInterface;
-use Survos\WorkflowBundle\Traits\MarkingTrait;
+use Survos\StateBundle\Traits\MarkingInterface;
+use Survos\StateBundle\Traits\MarkingTrait;
 
 #[ORM\Entity(repositoryClass: FreeDictCatalogRepository::class)]
 #[ORM\Table(name: 'freedict_catalog')]

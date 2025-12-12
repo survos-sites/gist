@@ -5,16 +5,14 @@ namespace App\Workflow;
 use App\Entity\FreeDictCatalog;
 use App\Service\TeiImportService;
 use Psr\Log\LoggerInterface;
-use Survos\WorkflowBundle\Attribute\Workflow;
+use Survos\StateBundle\Attribute\Workflow;
 use Symfony\Component\Workflow\Attribute\AsGuardListener;
 use Symfony\Component\Workflow\Attribute\AsTransitionListener;
 use Symfony\Component\Workflow\Event\GuardEvent;
 use Symfony\Component\Workflow\Event\TransitionEvent;
-
-#[Workflow(supports: [FreeDictCatalog::class], name: self::WORKFLOW_NAME)]
-class FreeDictCatalogWorkflow implements IFreeDictCatalogWorkflow
+use App\Workflow\IFreeDictCatalogWorkflow as WF;
+class FreeDictCatalogWorkflow
 {
-	public const WORKFLOW_NAME = 'FreeDictCatalogWorkflow';
 
 	public function __construct(
         private TeiImportService $teiImportService,
@@ -30,7 +28,7 @@ class FreeDictCatalogWorkflow implements IFreeDictCatalogWorkflow
 	}
 
     // this is really process..
-	#[AsTransitionListener(self::WORKFLOW_NAME, self::TRANSITION_DOWNLOAD)]
+	#[AsTransitionListener(WF::WORKFLOW_NAME, WF::TRANSITION_DOWNLOAD)]
 	public function onDownload(TransitionEvent $event): void
 	{
 		$freeDictCatalog = $this->getFreeDictCatalog($event);
@@ -45,7 +43,7 @@ class FreeDictCatalogWorkflow implements IFreeDictCatalogWorkflow
 	}
 
 
-	#[AsTransitionListener(self::WORKFLOW_NAME, self::TRANSITION_PROCESS)]
+	#[AsTransitionListener(WF::WORKFLOW_NAME, WF::TRANSITION_PROCESS)]
 	public function onProcess(TransitionEvent $event): void
 	{
 		$freeDictCatalog = $this->getFreeDictCatalog($event);
