@@ -1,5 +1,21 @@
 {
     "controllers": {
+        "@survos/state-bundle": {
+            "workflow": {
+                "enabled": true,
+                "fetch": "eager"
+            }
+        },
+        "@survos/tabler-bundle": {
+            "accordion": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "search": {
+                "enabled": true,
+                "fetch": "lazy"
+            }
+        },
         "@symfony/ux-turbo": {
             "turbo-core": {
                 "enabled": true,

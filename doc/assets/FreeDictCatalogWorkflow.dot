@@ -1,0 +1,15 @@
+digraph workflow {
+  ratio="compress" rankdir="TB" label=<<B>FreeDictCatalogWorkflow</B>>
+  node [fontsize="8" fontname="Arial" color="lightBlue" style="filled" fixedsize="false" width="2" height="1"];
+  edge [fontsize="7" fontname="Arial" color="#333333" arrowhead="normal" arrowsize="0.5"];
+
+  place_new [label=<<B>new</B>>, shape=oval fillcolor="lightgreen" style="filled" xlabel="Place new: "];
+  place_downloaded [label=<<B>downloaded</B>>, shape=oval fillcolor="lightgreen" style="filled" xlabel="Place downloaded: "];
+  place_processed [label=<<B>processed</B>>, shape=oval fillcolor="lightgreen" style="filled" xlabel="Place processed: "];
+  transition_download [label=<<B>download</B><BR/>async: >, shape="box" regular="" xlabel="Transition download: "];
+  transition_process [label=<<B>process</B><BR/>async: >, shape="box" regular="" xlabel="Transition process: "];
+  place_new -> transition_download [style="solid", comment="new"];
+  transition_download -> place_downloaded [style="solid"];
+  place_downloaded -> transition_process [style="solid", comment="downloaded"];
+  transition_process -> place_processed [style="solid"];
+}

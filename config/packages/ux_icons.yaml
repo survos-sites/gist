@@ -1,0 +1,26 @@
+ux_icons:
+    default_icon_attributes:
+        fill: currentColor
+        height: '1em'
+        width: '1em'
+
+    ignore_not_found: true
+
+    aliases:
+        # Action icons
+        add:    'mdi:plus-circle-outline'
+        edit:   'mdi:pencil-outline'
+        delete: 'mdi:trash-can-outline'
+        view:   'mdi:eye-outline'
+        search: 'mdi:magnify'
+        save:   'mdi:content-save-outline'
+
+        # Misc
+        public:  'mdi:eye-outline'
+        private: 'mdi:eye-off-outline'
+        logout:  'mdi:logout'
+        admin:   'mdi:shield-account-outline'
+
+when@prod:
+    ux_icons:
+        ignore_not_found: true

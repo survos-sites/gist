@@ -20,4 +20,12 @@ class FreeDictCatalogRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['name' => $name]);
     }
+
+    /** @return FreeDictCatalog[] */
+    public function findByMarking(string $marking): array
+    {
+        return $this->findBy(['marking' => $marking], ['name' => 'ASC']);
+    }
+
+
 }
