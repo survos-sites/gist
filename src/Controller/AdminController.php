@@ -1,10 +1,10 @@
 <?php
+
 // src/Controller/AdminController.php
 declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Dictionary;
 use App\Entity\Language;
 use App\Entity\Lemma;
 use App\Entity\Translation;
@@ -14,7 +14,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AdminController extends AbstractController
 {
-    public function __construct(private readonly EntityManagerInterface $em) {}
+    public function __construct(private readonly EntityManagerInterface $em)
+    {
+    }
 
     #[Route('/admin', name: 'admin_dashboard', methods: ['GET'])]
     public function dashboard()
@@ -53,8 +55,8 @@ final class AdminController extends AbstractController
 
         return $this->render('admin/dashboard.html.twig', [
             'lemmaRows' => $lemmaRows,
-            'pairRows'  => $pairRows,
-            'dictRows'  => $dictRows,
+            'pairRows' => $pairRows,
+            'dictRows' => $dictRows,
         ]);
     }
 }

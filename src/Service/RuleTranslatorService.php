@@ -1,4 +1,5 @@
 <?php
+
 // src/Service/RuleTranslatorService.php
 declare(strict_types=1);
 
@@ -17,58 +18,61 @@ namespace App\Service;
 final class RuleTranslatorService
 {
     public function __construct(
-        private readonly StarDictLookup $lookup
-    ) {}
+        private readonly StarDictLookup $lookup,
+    ) {
+    }
 
     public function translate(string $src, string $dst, string $text, string $mode = 'rules'): string
     {
-        if ($mode !== 'rules') {
+        if ('rules' !== $mode) {
             return $this->lookup->translateWordByWord($src, $dst, $text);
         }
 
         // tokenize preserving delimiters
         $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
 
-        if ($parts === false) {
+        if (false === $parts) {
             return $this->lookup->translateWordByWord($src, $dst, $text);
         }
 
         // Basic English→Spanish article handling only (extend as needed)
-        $isEnToEs = ($src === 'eng' || $src === 'en') && ($dst === 'spa' || $dst === 'es');
+        $isEnToEs = ('eng' === $src || 'en' === $src) && ('spa' === $dst || 'es' === $dst);
 
         $out = '';
-        for ($i = 0; $i < \count($parts); $i++) {
+        for ($i = 0; $i < \count($parts); ++$i) {
             $chunk = $parts[$i];
-            if ($chunk === '') continue;
+            if ('' === $chunk) {
+                continue;
+            }
 
-            if (\preg_match('~^\p{L}+$~u', $chunk) !== 1) {
+            if (1 !== \preg_match('~^\p{L}+$~u', $chunk)) {
                 $out .= $chunk;
                 continue;
             }
 
             $lower = \mb_strtolower($chunk);
 
-            if ($isEnToEs && ($lower === 'a' || $lower === 'an' || $lower === 'the')) {
+            if ($isEnToEs && ('a' === $lower || 'an' === $lower || 'the' === $lower)) {
                 // Peek next word (skip delimiters)
                 $j = $i + 1;
-                while ($j < \count($parts) && \preg_match('~^\p{L}+$~u', (string)($parts[$j] ?? '')) !== 1) {
-                    $j++;
+                while ($j < \count($parts) && 1 !== \preg_match('~^\p{L}+$~u', (string) ($parts[$j] ?? ''))) {
+                    ++$j;
                 }
 
                 if ($j < \count($parts)) {
-                    $noun = (string)$parts[$j];
+                    $noun = (string) $parts[$j];
                     // Lookup Spanish value & guess gender/number
                     $value = $this->lookup->lookupOne($src, $dst, $noun) ?? '';
                     [$gender, $plural] = $this->guessGenderNumberEs($value);
 
-                    if ($lower === 'a' || $lower === 'an') {
-                        $article = $plural ? ($gender === 'f' ? 'unas' : 'unos') : ($gender === 'f' ? 'una' : 'un');
+                    if ('a' === $lower || 'an' === $lower) {
+                        $article = $plural ? ('f' === $gender ? 'unas' : 'unos') : ('f' === $gender ? 'una' : 'un');
                         $out .= $article;
                         continue;
                     }
 
-                    if ($lower === 'the') {
-                        $article = $plural ? ($gender === 'f' ? 'las' : 'los') : ($gender === 'f' ? 'la' : 'el');
+                    if ('the' === $lower) {
+                        $article = $plural ? ('f' === $gender ? 'las' : 'los') : ('f' === $gender ? 'la' : 'el');
                         $out .= $article;
                         continue;
                     }
@@ -84,11 +88,11 @@ final class RuleTranslatorService
 
     /**
      * Parse a Spanish dict snippet to extract (very roughly) gender & plural.
-     * Returns [gender: 'm'|'f'|null, plural: bool]
+     * Returns [gender: 'm'|'f'|null, plural: bool].
      */
     private function guessGenderNumberEs(string $snippet): array
     {
-        $s = ' ' . \mb_strtolower($snippet) . ' ';
+        $s = ' '.\mb_strtolower($snippet).' ';
 
         $gender = null;
         if (\preg_match('~\bnm\b~', $s) || \preg_match('~\b(noun|sust|sustantivo)\b.*\bm\b~', $s) || \preg_match('~\bm\W~', $s)) {

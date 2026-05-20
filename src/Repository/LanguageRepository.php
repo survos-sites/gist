@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/LanguageRepository.php
 declare(strict_types=1);
 
@@ -28,6 +29,7 @@ class LanguageRepository extends ServiceEntityRepository
                 $lang->name = $name;
                 $this->getEntityManager()->persist($lang);
             }
+
             return $lang;
         }
 
@@ -37,6 +39,7 @@ class LanguageRepository extends ServiceEntityRepository
         $lang->name = $name ?? $code3;
 
         $this->getEntityManager()->persist($lang);
+
         return $lang;
     }
 }

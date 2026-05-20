@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/LemmaRepository.php
 declare(strict_types=1);
 
@@ -44,9 +45,10 @@ class LemmaRepository extends ServiceEntityRepository
         $s = \mb_strtolower($s);
         // strip diacritics using Unicode normalization
         $n = \Normalizer::normalize($s, \Normalizer::FORM_D);
-        if ($n !== null) {
+        if (null !== $n) {
             $s = \preg_replace('~\p{Mn}+~u', '', $n) ?? $s;
         }
+
         return $s;
     }
 }

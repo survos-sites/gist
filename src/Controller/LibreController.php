@@ -1,4 +1,5 @@
 <?php
+
 // src/Controller/LibreController.php
 declare(strict_types=1);
 
@@ -16,14 +17,16 @@ final class LibreController extends AbstractController
     public function __construct(
         private readonly StarDictLookup $lookup,
         private readonly RuleTranslatorService $rules,
-    ) {}
+    ) {
+    }
 
     #[Route(path: '/languages', name: 'lt_languages', methods: ['GET'])]
     public function languages(): JsonResponse
     {
         $codes = $this->lookup->availableLanguageCodes();
         // Return just codes, like LibreTranslate; let UI name them
-        $out = \array_map(fn(string $c) => ['code' => $c, 'name' => $c], $codes);
+        $out = \array_map(fn (string $c) => ['code' => $c, 'name' => $c], $codes);
+
         return $this->json($out);
     }
 
@@ -32,17 +35,17 @@ final class LibreController extends AbstractController
     {
         $payload = $request->toArray() ?: $request->request->all();
 
-        $q      = (string)($payload['q'] ?? '');
-        $source = (string)($payload['source'] ?? '');
-        $target = (string)($payload['target'] ?? '');
-        $mode   = (string)($payload['mode'] ?? 'text'); // 'text' (default) or 'rules'
+        $q = (string) ($payload['q'] ?? '');
+        $source = (string) ($payload['source'] ?? '');
+        $target = (string) ($payload['target'] ?? '');
+        $mode = (string) ($payload['mode'] ?? 'text'); // 'text' (default) or 'rules'
 
-        if ($q === '' || $source === '' || $target === '') {
+        if ('' === $q || '' === $source || '' === $target) {
             return $this->json(['error' => 'Missing q, source, or target.'], 400);
         }
 
         try {
-            $translated = $mode === 'rules'
+            $translated = 'rules' === $mode
                 ? $this->rules->translate($source, $target, $q, 'rules')
                 : $this->lookup->translateWordByWord($source, $target, $q);
         } catch (\Throwable $e) {

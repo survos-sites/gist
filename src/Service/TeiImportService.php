@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -18,8 +19,8 @@ use App\Workflow\IFreeDictCatalogWorkflow as WF;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -40,7 +41,8 @@ final class TeiImportService
         private DictionaryRepository $dictRepo,
         private LemmaRepository $lemmaRepo,
         private TranslationRepository $transRepo,
-    ) {}
+    ) {
+    }
 
     // =========================================================================
     // Commands
@@ -59,11 +61,13 @@ final class TeiImportService
         $row = $this->catalogRepo->findOneByName($pair);
         if (!$row) {
             $io->error("No catalog row for '$pair'. Run: bin/console app:load");
+
             return Command::FAILURE;
         }
 
-        if ($row->marking === WF::PLACE_PROCESSED && !$force) {
+        if (WF::PLACE_PROCESSED === $row->marking && !$force) {
             $io->warning("'$pair' already imported. Use --force to reimport.");
+
             return Command::SUCCESS;
         }
 
@@ -76,7 +80,7 @@ final class TeiImportService
             limit: $limit,
             progress: function (int $n) use (&$count, $io) {
                 $count = $n;
-                if ($n % 1000 === 0) {
+                if (0 === $n % 1000) {
                     $io->writeln("  … $n entries");
                 }
             }
@@ -86,6 +90,7 @@ final class TeiImportService
         $this->em->flush();
 
         $io->success("Imported $count entries into dictionary {$dict->name}.");
+
         return Command::SUCCESS;
     }
 
@@ -107,6 +112,7 @@ final class TeiImportService
 
         if (!$candidates) {
             $io->success('Nothing to import — all pairs already processed. Use --force to reimport.');
+
             return Command::SUCCESS;
         }
 
@@ -116,14 +122,14 @@ final class TeiImportService
         $progress->start();
 
         $imported = 0;
-        $skipped  = 0;
-        $failed   = 0;
+        $skipped = 0;
+        $failed = 0;
 
         foreach ($candidates as $catalog) {
             [$teiUrl] = $this->pickTeiUrl($catalog);
-            if ($teiUrl === '') {
+            if ('' === $teiUrl) {
                 $io->writeln("\n  Skipping {$catalog->name}: no TEI/src release URL.");
-                $skipped++;
+                ++$skipped;
                 $progress->advance();
                 continue;
             }
@@ -132,12 +138,12 @@ final class TeiImportService
                 $this->importTei($catalog, truncate: $force, limit: $limit);
                 $catalog->marking = WF::PLACE_PROCESSED;
                 $this->em->flush();
-                $imported++;
+                ++$imported;
             } catch (\Throwable $e) {
                 $catalog->marking = WF::PLACE_NEW;
                 $this->em->flush();
-                $io->writeln("\n  Failed {$catalog->name}: " . $e->getMessage());
-                $failed++;
+                $io->writeln("\n  Failed {$catalog->name}: ".$e->getMessage());
+                ++$failed;
             }
 
             $progress->advance();
@@ -160,8 +166,9 @@ final class TeiImportService
 
     public function cacheDir(): string
     {
-        $dir = $this->dataDir . '/tei';
+        $dir = $this->dataDir.'/tei';
         $this->fs->mkdir($dir);
+
         return $dir;
     }
 
@@ -170,27 +177,72 @@ final class TeiImportService
     {
         $releases = $catalog->raw['releases'] ?? [];
         foreach (['tei', 'src'] as $platform) {
-            $c = \array_values(\array_filter($releases, fn($r) => ($r['platform'] ?? null) === $platform));
+            $c = \array_values(\array_filter($releases, fn ($r) => ($r['platform'] ?? null) === $platform));
             if ($c) {
-                \usort($c, fn($a, $b) => \strcmp((string)$b['date'], (string)$a['date']));
-                return [(string)$c[0]['URL'], $platform];
+                \usort($c, fn ($a, $b) => \strcmp((string) $b['date'], (string) $a['date']));
+
+                return [(string) $c[0]['URL'], $platform];
             }
         }
+
         return ['', ''];
     }
 
+    /** Download the TEI archive for a catalog entry and return the local tei.xml path. */
+    public function downloadTei(FreeDictCatalog $catalog): string
+    {
+        [$teiUrl] = $this->pickTeiUrl($catalog);
+        if ('' === $teiUrl) {
+            throw new \RuntimeException("No TEI URL for {$catalog->name}.");
+        }
+
+        return $this->ensureTeiXml($catalog->name, $teiUrl);
+    }
+
+    /** The expected local path for a catalog entry's tei.xml (may not exist yet). */
+    public function teiXmlPath(FreeDictCatalog $catalog): string
+    {
+        return $this->cacheDir()."/{$catalog->name}/tei.xml";
+    }
+
+    /** Parse the downloaded tei.xml and import into the database. */
+    public function processTei(
+        FreeDictCatalog $catalog,
+        bool $truncate = false,
+        ?int $limit = null,
+        ?callable $progress = null,
+    ): Dictionary {
+        $teiPath = $this->teiXmlPath($catalog);
+        if (!\is_file($teiPath) || \filesize($teiPath) === 0) {
+            throw new \RuntimeException("TEI file not found for {$catalog->name} — run download first.");
+        }
+
+        return $this->parseAndPersist($catalog, $teiPath, $truncate, $limit, $progress);
+    }
+
+    /** Convenience wrapper: download then process in one call (used by CLI commands). */
     public function importTei(
         FreeDictCatalog $catalog,
         bool $truncate = false,
         ?int $limit = null,
         ?callable $progress = null,
     ): Dictionary {
+        $this->downloadTei($catalog);
+
+        return $this->processTei($catalog, $truncate, $limit, $progress);
+    }
+
+    private function parseAndPersist(
+        FreeDictCatalog $catalog,
+        string $teiPath,
+        bool $truncate,
+        ?int $limit,
+        ?callable $progress,
+    ): Dictionary {
         $this->refreshManagers();
 
         $pair = $catalog->name;
-        if ($pair === '' || !\str_contains($pair, '-')) {
-            throw new \InvalidArgumentException("Catalog item missing valid name: '$pair'");
-        }
+        $this->currentPair = $pair;
         [$srcCode, $dstCode] = \explode('-', $pair, 2);
 
         $src = $this->langRepo->getOrCreate($srcCode, null, $srcCode);
@@ -200,18 +252,15 @@ final class TeiImportService
         if (!$this->em->contains($dict)) {
             $this->em->persist($dict);
         }
-        $dict->name          = $pair;
-        $dict->src           = $src;
-        $dict->dst           = $dst;
-        $dict->edition       = $catalog->edition;
+        $dict->name = $pair;
+        $dict->src = $src;
+        $dict->dst = $dst;
+        $dict->edition = $catalog->edition;
         $dict->releaseVersion = $catalog->releaseVersion;
-        $dict->releaseDate   = $catalog->releaseDate;
+        $dict->releaseDate = $catalog->releaseDate;
 
         [$teiUrl] = $this->pickTeiUrl($catalog);
-        if ($teiUrl === '') {
-            throw new \RuntimeException("No TEI URL for $pair.");
-        }
-        $dict->teiUrl = $teiUrl;
+        $dict->teiUrl = $teiUrl ?: null;
 
         $this->safeFlush();
 
@@ -226,22 +275,24 @@ final class TeiImportService
             );
         }
 
-        $teiPath = $this->ensureTeiXml($pair, $teiUrl);
-        $reader  = new \XMLReader();
+        $teiPath = $teiPath;
+        $reader = new \XMLReader();
         if (!$reader->open($teiPath, null, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)) {
             throw new \RuntimeException("Cannot open TEI: $teiPath");
         }
 
-        $ns    = 'http://www.tei-c.org/ns/1.0';
+        $ns = 'http://www.tei-c.org/ns/1.0';
         $count = 0;
         $batch = 0;
 
         while ($reader->read()) {
-            if ($reader->nodeType !== \XMLReader::ELEMENT || $reader->localName !== 'entry') {
+            if (\XMLReader::ELEMENT !== $reader->nodeType || 'entry' !== $reader->localName) {
                 continue;
             }
             $xml = $reader->readOuterXML();
-            if ($xml === '') continue;
+            if ('' === $xml) {
+                continue;
+            }
 
             $doc = new \DOMDocument();
             $doc->loadXML($xml, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
@@ -249,37 +300,41 @@ final class TeiImportService
             $xp->registerNamespace('tei', $ns);
 
             $orth = $this->text($xp, '//tei:form/tei:orth') ?? '';
-            if ($orth === '') continue;
+            if ('' === $orth) {
+                continue;
+            }
 
-            $pos    = $this->text($xp, '//tei:gramGrp/tei:pos');
+            $pos = $this->text($xp, '//tei:gramGrp/tei:pos');
             $gender = $this->shortGender($this->text($xp, '//tei:gramGrp/tei:gen'));
-            $lemma  = $this->lemmaRepo->upsert($src, $orth, $pos, $gender, features: null);
+            $lemma = $this->lemmaRepo->upsert($src, $orth, $pos, $gender, features: null);
 
             $rank = 1;
             foreach ($this->texts($xp, '//tei:sense/tei:def | //tei:sense/tei:gloss') as $gloss) {
-                $s        = new Sense();
+                $s = new Sense();
                 $s->lemma = $lemma;
                 $s->gloss = $this->clean($gloss);
-                $s->rank  = $rank++;
+                $s->rank = $rank++;
                 $this->em->persist($s);
             }
 
             $tRank = 1;
             foreach ($this->texts($xp, '//tei:sense//tei:cit[@type="translation"]//tei:quote') as $tw) {
                 $tw = \trim($tw);
-                if ($tw === '') continue;
+                if ('' === $tw) {
+                    continue;
+                }
                 $tLemma = $this->lemmaRepo->upsert($dst, $tw, null, null, null);
                 if (!$this->transRepo->findOneBy(['srcLemma' => $lemma, 'dstLemma' => $tLemma])) {
-                    $edge           = new Translation();
+                    $edge = new Translation();
                     $edge->srcLemma = $lemma;
                     $edge->dstLemma = $tLemma;
-                    $edge->rank     = $tRank++;
+                    $edge->rank = $tRank++;
                     $this->em->persist($edge);
                 }
             }
 
-            $batch++;
-            if ($batch % 1000 === 0) {
+            ++$batch;
+            if (0 === $batch % 1000) {
                 try {
                     $this->safeFlush();
                 } catch (UniqueConstraintViolationException) {
@@ -287,16 +342,14 @@ final class TeiImportService
                 } catch (\Throwable) {
                     // swallow; refreshManagers will reopen EM
                 }
-                $this->em->clear();
-                $this->refreshManagers();
-                $src = $this->langRepo->find($src->id) ?? $src;
-                $dst = $this->langRepo->find($dst->id) ?? $dst;
             }
 
             if ($progress) {
                 $progress(++$count);
             }
-            if ($limit && $count >= $limit) break;
+            if ($limit && $count >= $limit) {
+                break;
+            }
         }
 
         $reader->close();
@@ -312,7 +365,7 @@ final class TeiImportService
 
     public function ensureTeiXml(string $pair, string $teiUrl): string
     {
-        $base = $this->cacheDir() . "/$pair";
+        $base = $this->cacheDir()."/$pair";
         $this->fs->mkdir($base);
         $dest = "$base/tei.xml";
 
@@ -322,12 +375,13 @@ final class TeiImportService
 
         if (\preg_match('~\.(tei|xml)$~i', $teiUrl)) {
             $this->download($teiUrl, $dest);
+
             return $dest;
         }
 
         $archive = "$base/src.tar.xz";
         $this->download($teiUrl, $archive);
-        $this->run('tar -xJf ' . \escapeshellarg($archive) . ' -C ' . \escapeshellarg($base));
+        $this->run('tar -xJf '.\escapeshellarg($archive).' -C '.\escapeshellarg($base));
         $tei = $this->findFirst($base, '/\.(tei|xml)$/i');
         if (!$tei) {
             throw new \RuntimeException("No TEI/XML found inside $archive");
@@ -335,6 +389,7 @@ final class TeiImportService
         if ($tei !== $dest) {
             $this->fs->copy($tei, $dest);
         }
+
         return $dest;
     }
 
@@ -346,14 +401,18 @@ final class TeiImportService
             throw new \RuntimeException("Download failed ($url): HTTP {$resp->getStatusCode()}");
         }
         $fp = \fopen($dest, 'wb');
-        if ($fp === false) {
+        if (false === $fp) {
             throw new \RuntimeException("Cannot open $dest for writing");
         }
         try {
             foreach ($this->http->stream($resp) as $chunk) {
-                if ($chunk->isTimeout()) continue;
+                if ($chunk->isTimeout()) {
+                    continue;
+                }
                 $data = $chunk->getContent();
-                if ($data !== '') \fwrite($fp, $data);
+                if ('' !== $data) {
+                    \fwrite($fp, $data);
+                }
             }
         } finally {
             \fclose($fp);
@@ -369,27 +428,28 @@ final class TeiImportService
         if (!$this->em->isOpen()) {
             $this->doctrine->resetManager();
         }
-        $this->em        = $this->doctrine->getManager();
-        $this->langRepo  = $this->em->getRepository(Language::class);
-        $this->dictRepo  = $this->em->getRepository(Dictionary::class);
+        $this->em = $this->doctrine->getManager();
+        $this->langRepo = $this->em->getRepository(Language::class);
+        $this->dictRepo = $this->em->getRepository(Dictionary::class);
         $this->lemmaRepo = $this->em->getRepository(Lemma::class);
         $this->transRepo = $this->em->getRepository(Translation::class);
     }
+
+    private string $currentPair = '';
 
     private function safeFlush(): void
     {
         try {
             $this->em->flush();
         } catch (\Throwable $e) {
-            $this->doctrine->resetManager();
-            $this->refreshManagers();
-            throw $e;
+            throw new \RuntimeException("[{$this->currentPair}] ".$e->getMessage(), 0, $e);
         }
     }
 
     private function text(\DOMXPath $xp, string $query): ?string
     {
         $n = $xp->query($query)->item(0);
+
         return $n ? \trim($n->textContent) : null;
     }
 
@@ -399,6 +459,7 @@ final class TeiImportService
         foreach ($xp->query($query) as $n) {
             $out[] = \trim($n->textContent);
         }
+
         return $out;
     }
 
@@ -409,11 +470,11 @@ final class TeiImportService
 
     private function shortGender(?string $g): ?string
     {
-        return match (\mb_strtolower(\trim((string)$g))) {
+        return match (\mb_strtolower(\trim((string) $g))) {
             'masculine', 'm' => 'm',
-            'feminine', 'f'  => 'f',
-            'neuter', 'n'    => 'n',
-            default          => null,
+            'feminine', 'f' => 'f',
+            'neuter', 'n' => 'n',
+            default => null,
         };
     }
 
@@ -427,6 +488,7 @@ final class TeiImportService
                 return $f->getPathname();
             }
         }
+
         return null;
     }
 
@@ -436,11 +498,11 @@ final class TeiImportService
         if (!\is_resource($p)) {
             throw new \RuntimeException("Failed to launch: $cmd");
         }
-        $err  = \stream_get_contents($pipes[2]);
+        $err = \stream_get_contents($pipes[2]);
         \fclose($pipes[1]);
         \fclose($pipes[2]);
         $code = \proc_close($p);
-        if ($code !== 0) {
+        if (0 !== $code) {
             throw new \RuntimeException("Command failed ($code): $cmd\n$err");
         }
     }

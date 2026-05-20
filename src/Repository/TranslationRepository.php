@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/TranslationRepository.php
 declare(strict_types=1);
 

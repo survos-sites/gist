@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/DictionaryRepository.php
 declare(strict_types=1);
 

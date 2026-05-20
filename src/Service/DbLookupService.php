@@ -1,4 +1,5 @@
 <?php
+
 // src/Service/DbLookupService.php
 declare(strict_types=1);
 
@@ -19,7 +20,8 @@ final class DbLookupService
         private readonly LemmaRepository $lemmaRepo,
         private readonly TranslationRepository $translationRepo,
         private readonly MorphHelper $morph, // << new helper
-    ) {}
+    ) {
+    }
 
     /**
      * Translate text word-by-word using DB lemmas + translation edges.
@@ -30,20 +32,23 @@ final class DbLookupService
         [$src, $dst] = [$this->requireLang($srcCode), $this->requireLang($dstCode)];
 
         $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-        if ($parts === false) {
+        if (false === $parts) {
             return $text;
         }
 
         $out = '';
         foreach ($parts as $chunk) {
-            if ($chunk === '') continue;
+            if ('' === $chunk) {
+                continue;
+            }
 
-            if (\preg_match('~^\p{L}+$~u', $chunk) === 1) {
+            if (1 === \preg_match('~^\p{L}+$~u', $chunk)) {
                 $out .= $this->translateToken($src, $dst, $chunk, $maxAlternates);
             } else {
                 $out .= $chunk; // punctuation/space
             }
         }
+
         return $out;
     }
 
@@ -60,17 +65,20 @@ final class DbLookupService
                 return \implode('; ', $defs);
             }
         }
+
         return null;
     }
 
     /**
      * Languages that currently have lemmas in the DB (return ISO-639-3 codes).
+     *
      * @return string[]
      */
     public function availableLanguageCodes(): array
     {
         $conn = $this->em->getConnection();
         $rows = $conn->fetchFirstColumn('SELECT DISTINCT l.code3 FROM lemma le JOIN lang l ON l.id = le.language_id ORDER BY 1 ASC');
+
         return \array_map('strval', $rows);
     }
 
@@ -109,6 +117,7 @@ final class DbLookupService
 
     /**
      * Return up to $limit target lemma headwords for a src token (ordered by rank then alphabetically).
+     *
      * @return list<string>
      */
     private function lookupAlternates(Language $src, Language $dst, string $token, int $limit): array
@@ -145,9 +154,11 @@ final class DbLookupService
             SQL, ['srcLemma' => $lemma->id, 'dst' => $dst->id, 'lim' => $limit], ['lim' => \PDO::PARAM_INT]);
 
             foreach ($rows as $r) {
-                $out[] = (string)$r['headword'];
+                $out[] = (string) $r['headword'];
             }
-            if ($out) break; // prefer the first matching source lemma
+            if ($out) {
+                break;
+            } // prefer the first matching source lemma
         }
 
         return \array_values(\array_unique($out));
@@ -157,13 +168,13 @@ final class DbLookupService
     {
         $code = \strtolower(\trim($code));
 
-        $lang = \strlen($code) === 2
+        $lang = 2 === \strlen($code)
             ? $this->langRepo->findOneBy(['code2' => $code])
             : $this->langRepo->findOneBy(['code3' => $code]);
 
         if (!$lang) {
             // Try the opposite code length as a last resort
-            $lang = \strlen($code) === 3
+            $lang = 3 === \strlen($code)
                 ? $this->langRepo->findOneBy(['code2' => \substr($code, 0, 2)])
                 : $this->langRepo->findOneBy(['code3' => $code]);
         }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -37,7 +38,7 @@ class Lemma
     #[ApiProperty(description: 'Lowercased/unaccented headword for fast lookups', example: 'laufen')]
     public string $norm_headword;
 
-    #[ORM\Column(length: 16, nullable: true)]
+    #[ORM\Column(length: 64, nullable: true)]
     #[Field(sortable: true, filterable: true, facet: true, order: 30)]
     #[ApiProperty(description: 'Part of speech', example: 'verb')]
     public ?string $pos = null;

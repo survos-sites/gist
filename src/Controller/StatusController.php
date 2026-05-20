@@ -1,4 +1,5 @@
 <?php
+
 // src/Controller/StatusController.php
 declare(strict_types=1);
 
@@ -6,12 +7,14 @@ namespace App\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
 final class StatusController extends AbstractController
 {
-    public function __construct(private readonly EntityManagerInterface $em) {}
+    public function __construct(private readonly EntityManagerInterface $em)
+    {
+    }
 
     #[Route('/dashboard', name: 'status_dashboard', methods: ['GET'])]
     public function index(): Response
@@ -31,8 +34,8 @@ final class StatusController extends AbstractController
 
         $rows = [];
         foreach ($dicts as $d) {
-            $srcId = (int)$d['src_id'];
-            $dstId = (int)$d['dst_id'];
+            $srcId = (int) $d['src_id'];
+            $dstId = (int) $d['dst_id'];
 
             $counts = $conn->fetchAssociative(<<<SQL
                 SELECT
@@ -64,22 +67,22 @@ final class StatusController extends AbstractController
             SQL, ['src' => $srcId]);
 
             $rows[] = [
-                'id'        => (int)$d['id'],
-                'name'      => (string)$d['name'],
-                'src'       => (string)$d['src_code3'],
-                'dst'       => (string)$d['dst_code3'],
-                'version'   => (string)($d['release_version'] ?? ''),
-                'date'      => (string)($d['release_date'] ?? ''),
-                'counts'    => [
-                    'src_lemmas' => (int)($counts['src_lemmas'] ?? 0),
-                    'dst_lemmas' => (int)($counts['dst_lemmas'] ?? 0),
-                    'edges'      => (int)($counts['edges'] ?? 0),
+                'id' => (int) $d['id'],
+                'name' => (string) $d['name'],
+                'src' => (string) $d['src_code3'],
+                'dst' => (string) $d['dst_code3'],
+                'version' => (string) ($d['release_version'] ?? ''),
+                'date' => (string) ($d['release_date'] ?? ''),
+                'counts' => [
+                    'src_lemmas' => (int) ($counts['src_lemmas'] ?? 0),
+                    'dst_lemmas' => (int) ($counts['dst_lemmas'] ?? 0),
+                    'edges' => (int) ($counts['edges'] ?? 0),
                 ],
-                'longest'   => \array_map('strval', $longest),
-                'recent'    => \array_map('strval', $recent),
+                'longest' => \array_map('strval', $longest),
+                'recent' => \array_map('strval', $recent),
                 'translate_url' => sprintf('/?source=%s&target=%s',
-                    urlencode((string)$d['src_code3']),
-                    urlencode((string)$d['dst_code3'])
+                    urlencode((string) $d['src_code3']),
+                    urlencode((string) $d['dst_code3'])
                 ),
             ];
         }

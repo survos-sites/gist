@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/FreeDictCatalogRepository.php
 declare(strict_types=1);
 
@@ -26,6 +27,4 @@ class FreeDictCatalogRepository extends ServiceEntityRepository
     {
         return $this->findBy(['marking' => $marking], ['name' => 'ASC']);
     }
-
-
 }

@@ -27,6 +27,7 @@
         "skoro/stardict": "^0.2.1",
         "survos/deployment-bundle": "^2.4.4",
         "survos/field-bundle": "^2.4.4",
+        "survos/search-bundle": "^2.4",
         "survos/state-bundle": "^2.4",
         "survos/tabler-bundle": "^2.4.4",
         "symfony/asset": "^8.1",

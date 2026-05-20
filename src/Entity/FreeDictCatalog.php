@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -25,7 +26,7 @@ class FreeDictCatalog implements MarkingInterface
         #[ORM\Column(length: 63)]
         #[Field(searchable: true, sortable: true, order: 10)]
         #[ApiProperty(description: 'FreeDict pair slug (the primary key)', example: 'afr-deu')]
-        private(set) readonly string $name,
+        public private(set) readonly string $name,
     ) {
         $this->marking = IFreeDictCatalogWorkflow::PLACE_NEW;
     }

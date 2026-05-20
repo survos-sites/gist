@@ -1909,6 +1909,22 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         ...<string, mixed>
  *     },
  * }
+ * @psalm-type LiveComponentConfig = array{
+ *     secret?: scalar|Param|null, // The secret used to compute fingerprints and checksums // Default: "%kernel.secret%"
+ *     fetch_credentials?: "same-origin"|"include"|"omit"|Param, // The default fetch credentials mode for all Live Components ('same-origin', 'include', 'omit') // Default: "same-origin"
+ * }
+ * @psalm-type MezcalitoUxSearchConfig = array{
+ *     default_adapter?: scalar|Param|null, // Default: "default"
+ *     adapters?: array<string, string|array{ // Default: []
+ *         dsn?: scalar|Param|null,
+ *     }>,
+ * }
+ * @psalm-type SurvosSearchConfig = array{
+ *     routes_enabled?: bool|Param, // Set false to manage this bundle's routes manually in your app. // Default: true
+ *     route_prefix?: scalar|Param|null, // URL prefix applied to all routes from this bundle. // Default: ""
+ *     default_hits_per_page?: int|Param, // Default: 24
+ *     default_hits_per_page_choices?: list<int|Param>,
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1931,6 +1947,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     survos_field?: SurvosFieldConfig,
  *     knp_menu?: KnpMenuConfig,
  *     api_platform?: ApiPlatformConfig,
+ *     live_component?: LiveComponentConfig,
+ *     mezcalito_ux_search?: MezcalitoUxSearchConfig,
+ *     survos_search?: SurvosSearchConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1956,6 +1975,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         survos_field?: SurvosFieldConfig,
  *         knp_menu?: KnpMenuConfig,
  *         api_platform?: ApiPlatformConfig,
+ *         live_component?: LiveComponentConfig,
+ *         mezcalito_ux_search?: MezcalitoUxSearchConfig,
+ *         survos_search?: SurvosSearchConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1979,6 +2001,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         survos_field?: SurvosFieldConfig,
  *         knp_menu?: KnpMenuConfig,
  *         api_platform?: ApiPlatformConfig,
+ *         live_component?: LiveComponentConfig,
+ *         mezcalito_ux_search?: MezcalitoUxSearchConfig,
+ *         survos_search?: SurvosSearchConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -2003,6 +2028,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         survos_field?: SurvosFieldConfig,
  *         knp_menu?: KnpMenuConfig,
  *         api_platform?: ApiPlatformConfig,
+ *         live_component?: LiveComponentConfig,
+ *         mezcalito_ux_search?: MezcalitoUxSearchConfig,
+ *         survos_search?: SurvosSearchConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

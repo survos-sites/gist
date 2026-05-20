@@ -1,4 +1,5 @@
 <?php
+
 // src/Service/StarDictLookup.php
 declare(strict_types=1);
 
@@ -21,7 +22,8 @@ final class StarDictLookup
     public function __construct(
         private readonly FreeDictService $svc,
         private readonly FreeDictCatalogRepository $repo,
-    ) {}
+    ) {
+    }
 
     public function translateWordByWord(string $src, string $dst, string $text): string
     {
@@ -29,14 +31,16 @@ final class StarDictLookup
         $this->ensurePairReady($pair);
 
         $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-        if ($parts === false) {
+        if (false === $parts) {
             return $text;
         }
 
         $out = '';
         foreach ($parts as $chunk) {
-            if ($chunk === '') continue;
-            if (\preg_match('~^\p{L}+$~u', $chunk) === 1) {
+            if ('' === $chunk) {
+                continue;
+            }
+            if (1 === \preg_match('~^\p{L}+$~u', $chunk)) {
                 $out .= $this->translateToken($pair, $chunk);
             } else {
                 $out .= $chunk;
@@ -52,12 +56,16 @@ final class StarDictLookup
         $this->ensurePairReady($pair);
 
         $v = $this->lookup($pair, $token);
-        if ($v !== null) return $v;
+        if (null !== $v) {
+            return $v;
+        }
 
         $lower = \mb_strtolower($token);
         if ($lower !== $token) {
             $v = $this->lookup($pair, $lower);
-            if ($v !== null) return $v;
+            if (null !== $v) {
+                return $v;
+            }
         }
 
         return $token;
@@ -69,13 +77,18 @@ final class StarDictLookup
         $this->ensurePairReady($pair);
 
         $v = $this->lookup($pair, $token);
-        if ($v !== null) return $v;
+        if (null !== $v) {
+            return $v;
+        }
 
         $lower = \mb_strtolower($token);
         if ($lower !== $token) {
             $v = $this->lookup($pair, $lower);
-            if ($v !== null) return $v;
+            if (null !== $v) {
+                return $v;
+            }
         }
+
         return null;
     }
 
@@ -84,10 +97,13 @@ final class StarDictLookup
         $rows = $this->repo->findAll();
         $codes = [];
         foreach ($rows as $row) {
-            if (($row->bestPlatform ?? '') !== 'stardict' || !$row->bestUrl) continue;
+            if (($row->bestPlatform ?? '') !== 'stardict' || !$row->bestUrl) {
+                continue;
+            }
             $codes[$row->src] = true;
             $codes[$row->dst] = true;
         }
+
         return \array_values(\array_keys($codes));
     }
 
@@ -95,14 +111,18 @@ final class StarDictLookup
 
     private function pairFrom(string $src, string $dst): string
     {
-        return $this->normalizeCode($src) . '-' . $this->normalizeCode($dst);
+        return $this->normalizeCode($src).'-'.$this->normalizeCode($dst);
     }
+
     private function normalizeCode(string $code): string
     {
         $code = \strtolower(\trim($code));
-        if (\strlen($code) === 3) return $code;
+        if (3 === \strlen($code)) {
+            return $code;
+        }
+
         return match ($code) {
-            'en'=>'eng','es'=>'spa','fr'=>'fra','de'=>'deu','it'=>'ita','pt'=>'por','nl'=>'nld','ar'=>'ara','ca'=>'cat','af'=>'afr',
+            'en' => 'eng','es' => 'spa','fr' => 'fra','de' => 'deu','it' => 'ita','pt' => 'por','nl' => 'nld','ar' => 'ara','ca' => 'cat','af' => 'afr',
             default => $code,
         };
     }
@@ -110,13 +130,18 @@ final class StarDictLookup
     private function translateToken(string $pair, string $word): string
     {
         $v = $this->lookup($pair, $word);
-        if ($v !== null) return $v;
+        if (null !== $v) {
+            return $v;
+        }
 
         $lower = \mb_strtolower($word);
         if ($lower !== $word) {
             $v = $this->lookup($pair, $lower);
-            if ($v !== null) return $v;
+            if (null !== $v) {
+                return $v;
+            }
         }
+
         return $word;
     }
 
@@ -127,9 +152,10 @@ final class StarDictLookup
             try {
                 $results = $dict->get($key);
                 foreach ($results as $r) {
-                    return $this->cleanVal((string)$r->getValue());
+                    return $this->cleanVal((string) $r->getValue());
                 }
-            } catch (\Throwable) { /* fall back */ }
+            } catch (\Throwable) { /* fall back */
+            }
         }
 
         if (isset($this->maps[$pair])) {
@@ -138,6 +164,7 @@ final class StarDictLookup
                 $off = $map[$key]['off'];
                 $size = $map[$key]['size'];
                 $payload = $this->svc->readSlice($this->dictPath[$pair], $off, $size, 4096);
+
                 return $this->cleanVal($payload);
             }
         }
@@ -164,7 +191,9 @@ final class StarDictLookup
 
     private function ensurePairReady(string $pair): void
     {
-        if (isset($this->skoro[$pair]) || isset($this->maps[$pair])) return;
+        if (isset($this->skoro[$pair]) || isset($this->maps[$pair])) {
+            return;
+        }
 
         $row = $this->repo->findOneBy(['name' => $pair]);
         if (!$row || ($row->bestPlatform ?? '') !== 'stardict' || !$row->bestUrl) {
@@ -172,17 +201,20 @@ final class StarDictLookup
         }
 
         $dir = $this->svc->ensureStarDictReady($pair, $row->bestUrl);
-        $ifo  = $this->svc->findFirst($dir, '/\.ifo$/i');
-        if (!$ifo) throw new \RuntimeException("Missing .ifo for '$pair'.");
+        $ifo = $this->svc->findFirst($dir, '/\.ifo$/i');
+        if (!$ifo) {
+            throw new \RuntimeException("Missing .ifo for '$pair'.");
+        }
 
         $ifoData = $this->svc->parseIfo($ifo);
         $version = $ifoData['version'] ?? '';
-        $bits    = (int)($ifoData['idxoffsetbits'] ?? 32);
+        $bits = (int) ($ifoData['idxoffsetbits'] ?? 32);
 
-        if ($version === '2.4.2' && $bits === 32) {
+        if ('2.4.2' === $version && 32 === $bits) {
             $idx = $this->svc->ensureIdxPath(\dirname($ifo));
             $dictAny = $this->svc->ensureDictPath(\dirname($ifo), false);
             $this->skoro[$pair] = StarDict::createFromFiles($ifo, $idx, $dictAny);
+
             return;
         }
 
@@ -196,35 +228,73 @@ final class StarDictLookup
     {
         $map = [];
         $f = \fopen($idxPath, 'rb');
-        if (!$f) throw new \RuntimeException("Cannot open $idxPath");
+        if (!$f) {
+            throw new \RuntimeException("Cannot open $idxPath");
+        }
         try {
             while (!\feof($f)) {
                 $head = '';
                 while (!\feof($f)) {
                     $ch = \fread($f, 1);
-                    if ($ch === '' || $ch === false) { $head=''; break; }
-                    if (\ord($ch) === 0) break;
+                    if ('' === $ch || false === $ch) {
+                        $head = '';
+                        break;
+                    }
+                    if (0 === \ord($ch)) {
+                        break;
+                    }
                     $head .= $ch;
-                    if (\strlen($head) > 10000) break;
+                    if (\strlen($head) > 10000) {
+                        break;
+                    }
                 }
-                if ($head === '') break;
+                if ('' === $head) {
+                    break;
+                }
 
-                if ($bits === 64) {
-                    $ob = \fread($f, 8); $sb = \fread($f, 4);
-                    if ($ob === false || $sb === false) break;
-                    $off = $this->uInt64be($ob); $size = $this->uInt32be($sb);
+                if (64 === $bits) {
+                    $ob = \fread($f, 8);
+                    $sb = \fread($f, 4);
+                    if (false === $ob || false === $sb) {
+                        break;
+                    }
+                    $off = $this->uInt64be($ob);
+                    $size = $this->uInt32be($sb);
                 } else {
-                    $ob = \fread($f, 4); $sb = \fread($f, 4);
-                    if ($ob === false || $sb === false) break;
-                    $off = $this->uInt32be($ob); $size = $this->uInt32be($sb);
+                    $ob = \fread($f, 4);
+                    $sb = \fread($f, 4);
+                    if (false === $ob || false === $sb) {
+                        break;
+                    }
+                    $off = $this->uInt32be($ob);
+                    $size = $this->uInt32be($sb);
                 }
 
-                if (!isset($map[$head])) { $map[$head] = ['off'=>$off,'size'=>$size]; }
+                if (!isset($map[$head])) {
+                    $map[$head] = ['off' => $off, 'size' => $size];
+                }
             }
-        } finally { \fclose($f); }
+        } finally {
+            \fclose($f);
+        }
+
         return $map;
     }
 
-    private function uInt32be(string $bytes): int { $bytes=(\strlen($bytes)===4)?$bytes:($bytes."\0\0\0\0"); $arr=\unpack('Nn',\substr($bytes,0,4)); return (int)($arr['n']??0); }
-    private function uInt64be(string $bytes): int { $bytes=\str_pad($bytes,8,"\0",STR_PAD_RIGHT); $hi=\unpack('Nn',\substr($bytes,0,4))['n']??0; $lo=\unpack('Nn',\substr($bytes,4,4))['n']??0; return (int)($hi*4294967296+$lo); }
+    private function uInt32be(string $bytes): int
+    {
+        $bytes = (4 === \strlen($bytes)) ? $bytes : ($bytes."\0\0\0\0");
+        $arr = \unpack('Nn', \substr($bytes, 0, 4));
+
+        return (int) ($arr['n'] ?? 0);
+    }
+
+    private function uInt64be(string $bytes): int
+    {
+        $bytes = \str_pad($bytes, 8, "\0", STR_PAD_RIGHT);
+        $hi = \unpack('Nn', \substr($bytes, 0, 4))['n'] ?? 0;
+        $lo = \unpack('Nn', \substr($bytes, 4, 4))['n'] ?? 0;
+
+        return (int) ($hi * 4294967296 + $lo);
+    }
 }

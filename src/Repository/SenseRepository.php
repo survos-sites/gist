@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/SenseRepository.php
 declare(strict_types=1);
 

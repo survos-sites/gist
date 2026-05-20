@@ -1,4 +1,5 @@
 <?php
+
 // src/Command/TranslateCommand.php
 declare(strict_types=1);
 
@@ -8,8 +9,8 @@ use App\Service\MorphHelper;
 use App\Service\RuleTranslatorService;
 use App\Service\StarDictLookup;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -21,7 +22,8 @@ final class TranslateCommand
         private readonly RuleTranslatorService $rules,
         private readonly EntityManagerInterface $em,
         private readonly MorphHelper $morph, // << inject helper
-    ) {}
+    ) {
+    }
 
     public function __invoke(
         SymfonyStyle $io,
@@ -34,44 +36,49 @@ final class TranslateCommand
         #[Option('Use simple rules (currently en→es articles/plurals demo)', shortcut: 'r')]
         bool $useRules = false,
         #[Option('Max definition length per word (0 = unlimited)', shortcut: 'D')]
-        int $defMax = 120
+        int $defMax = 120,
     ): int {
         try {
             $parts = \preg_split('~(\p{L}+)~u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-            if ($parts === false) {
+            if (false === $parts) {
                 $io->error('Tokenizer failed.');
+
                 return 1;
             }
 
             $rows = [];
             $wordCount = 0;
-            $hitCount  = 0;
+            $hitCount = 0;
             $out = '';
 
-            for ($i = 0; $i < \count($parts); $i++) {
+            for ($i = 0; $i < \count($parts); ++$i) {
                 $chunk = $parts[$i];
-                if ($chunk === '') continue;
+                if ('' === $chunk) {
+                    continue;
+                }
 
-                if (\preg_match('~^\p{L}+$~u', $chunk) !== 1) {
+                if (1 !== \preg_match('~^\p{L}+$~u', $chunk)) {
                     $out .= $chunk; // punctuation / whitespace
                     continue;
                 }
 
-                $wordCount++;
+                ++$wordCount;
 
                 // -------- candidate loop (morphology-aware StarDict lookups) --------
                 $cands = $this->morph->candidates($source, $chunk);
                 // ensure original token first even if helper changed order
-                if ($cands[0] ?? '' !== $chunk) { \array_unshift($cands, $chunk); }
+                if ($cands[0] ?? '' !== $chunk) {
+                    \array_unshift($cands, $chunk);
+                }
 
                 $chosenHead = null;
                 $chosenCand = null;
-                $chosenRaw  = null;
+                $chosenRaw = null;
 
                 foreach ($cands as $cand) {
-// Raw gloss (already cleaned by StarDictLookup::cleanVal())
+                    // Raw gloss (already cleaned by StarDictLookup::cleanVal())
                     $raw = $this->lookup->translateWordDirect($source, $target, $cand);
-// Try to reduce to headword-ish token
+                    // Try to reduce to headword-ish token
                     $head = $this->simplifyGlossToHeadword($raw, $target, $cand);
 
                     if ($io->isVeryVerbose()) {
@@ -90,24 +97,24 @@ final class TranslateCommand
                      *   AND our headword simplifier also returns the candidate itself,
                      *   that’s not a translation — keep trying the next candidate.
                      */
-                    $rawSame  = \mb_strtolower($raw)  === \mb_strtolower($cand);
-                    $headSame = $head !== null && \mb_strtolower($head) === \mb_strtolower($cand);
+                    $rawSame = \mb_strtolower($raw) === \mb_strtolower($cand);
+                    $headSame = null !== $head && \mb_strtolower($head) === \mb_strtolower($cand);
 
-                    if ($head !== null && $head !== '' && !($rawSame && $headSame)) {
+                    if (null !== $head && '' !== $head && !($rawSame && $headSame)) {
                         $chosenHead = $head;
                         $chosenCand = $cand;
-                        $chosenRaw  = $raw;
+                        $chosenRaw = $raw;
                         break;
                     }
                 }
 
                 // Fallbacks
-                if ($chosenHead === null || $chosenHead === '') {
+                if (null === $chosenHead || '' === $chosenHead) {
                     $raw = $this->lookup->translateWordDirect($source, $target, $chunk);
-                    $head = (\preg_match('~^\p{L}+$~u', $raw) === 1) ? $raw : $chunk;
+                    $head = (1 === \preg_match('~^\p{L}+$~u', $raw)) ? $raw : $chunk;
                     $chosenHead = $head;
                     $chosenCand = $chunk;
-                    $chosenRaw  = $raw;
+                    $chosenRaw = $raw;
                 }
 
                 if ($io->isVeryVerbose()) {
@@ -118,13 +125,15 @@ final class TranslateCommand
                 }
 
                 $out .= $chosenHead;
-                if ($chosenHead !== $chunk) { $hitCount++; }
+                if ($chosenHead !== $chunk) {
+                    ++$hitCount;
+                }
 
                 // Bonus definition for the table (first successful candidate’s gloss)
                 $bonus = $chosenRaw ?? $this->lookup->lookupOne($source, $target, $chunk) ?? '';
                 $def = $this->cleanDefinition($bonus);
                 if ($defMax > 0 && \mb_strlen($def) > $defMax) {
-                    $def = \mb_substr($def, 0, $defMax) . '…';
+                    $def = \mb_substr($def, 0, $defMax).'…';
                 }
 
                 $rows[] = [$chunk, '→', $chosenHead, $def];
@@ -156,7 +165,7 @@ final class TranslateCommand
 
             if ($pairStats) {
                 $io->text(\sprintf(
-                    "Loaded: src lemmas %s | dst lemmas %s | edges %s (pair %s→%s)",
+                    'Loaded: src lemmas %s | dst lemmas %s | edges %s (pair %s→%s)',
                     \number_format($pairStats['src_lemmas']),
                     \number_format($pairStats['dst_lemmas']),
                     \number_format($pairStats['edges']),
@@ -164,29 +173,30 @@ final class TranslateCommand
                     $codes['dst3']
                 ));
                 if ($pairStats['version'] || $pairStats['date']) {
-                    $io->text("Release: " . \trim("v{$pairStats['version']} {$pairStats['date']}"));
+                    $io->text('Release: '.\trim("v{$pairStats['version']} {$pairStats['date']}"));
                 }
             } else {
                 $io->text("Loaded: (no dictionary stats found for {$codes['src3']}→{$codes['dst3']})");
             }
 
             return 0;
-
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
+
             return 1;
         }
     }
 
     private function normalizeCodes(string $src, string $dst): array
     {
-        $map = ['en'=>'eng','es'=>'spa','fr'=>'fra','de'=>'deu','it'=>'ita','pt'=>'por','nl'=>'nld','ar'=>'ara','ca'=>'cat','af'=>'afr'];
+        $map = ['en' => 'eng', 'es' => 'spa', 'fr' => 'fra', 'de' => 'deu', 'it' => 'ita', 'pt' => 'por', 'nl' => 'nld', 'ar' => 'ara', 'ca' => 'cat', 'af' => 'afr'];
         $src2 = \strtolower(\trim($src));
         $dst2 = \strtolower(\trim($dst));
+
         return [
-            'src2'=>$src2, 'dst2'=>$dst2,
-            'src3'=>\strlen($src2)===3 ? $src2 : ($map[$src2]??$src2),
-            'dst3'=>\strlen($dst2)===3 ? $dst2 : ($map[$dst2]??$dst2),
+            'src2' => $src2, 'dst2' => $dst2,
+            'src3' => 3 === \strlen($src2) ? $src2 : ($map[$src2] ?? $src2),
+            'dst3' => 3 === \strlen($dst2) ? $dst2 : ($map[$dst2] ?? $dst2),
         ];
     }
 
@@ -199,10 +209,13 @@ final class TranslateCommand
             FROM lang ls
             CROSS JOIN lang ld
             WHERE ls.code3 = :src AND ld.code3 = :dst
-        SQL, ['src'=>$src3,'dst'=>$dst3]);
-        if (!$lang) return null;
+        SQL, ['src' => $src3, 'dst' => $dst3]);
+        if (!$lang) {
+            return null;
+        }
 
-        $srcId = (int)$lang['src_id']; $dstId = (int)$lang['dst_id'];
+        $srcId = (int) $lang['src_id'];
+        $dstId = (int) $lang['dst_id'];
 
         $counts = $conn->fetchAssociative(<<<SQL
             SELECT
@@ -216,7 +229,7 @@ final class TranslateCommand
                 WHERE sl.language_id = :src
                   AND dl.language_id = :dst
               ) AS edges
-        SQL, ['src'=>$srcId,'dst'=>$dstId]);
+        SQL, ['src' => $srcId, 'dst' => $dstId]);
 
         $dict = $conn->fetchAssociative(<<<SQL
             SELECT d.release_version, d.release_date
@@ -224,27 +237,30 @@ final class TranslateCommand
             WHERE d.src_id = :src AND d.dst_id = :dst
             ORDER BY d.id ASC
             LIMIT 1
-        SQL, ['src'=>$srcId,'dst'=>$dstId]);
+        SQL, ['src' => $srcId, 'dst' => $dstId]);
 
         return [
-            'src_lemmas'=>(int)($counts['src_lemmas']??0),
-            'dst_lemmas'=>(int)($counts['dst_lemmas']??0),
-            'edges'=>(int)($counts['edges']??0),
-            'version'=>$dict['release_version']??null,
-            'date'=>$dict['release_date']??null,
+            'src_lemmas' => (int) ($counts['src_lemmas'] ?? 0),
+            'dst_lemmas' => (int) ($counts['dst_lemmas'] ?? 0),
+            'edges' => (int) ($counts['edges'] ?? 0),
+            'version' => $dict['release_version'] ?? null,
+            'date' => $dict['release_date'] ?? null,
         ];
     }
 
     /** Strip IPA / HTML and collapse whitespace for readable “bonus” defs. */
     private function cleanDefinition(string $s): string
     {
-        if ($s === '') return '';
+        if ('' === $s) {
+            return '';
+        }
         $s = \preg_replace('~</?[a-z][a-z0-9:-]*[^>]*>~i', ' ', $s) ?? $s;
         $s = \strtr($s, ['<' => ' ', '>' => ' ']);
         $s = \preg_replace('~(/[^/]+/|\[[^\]]+\])~u', ' ', $s) ?? $s;
         $s = \strip_tags($s);
         $s = \preg_replace('~[\x00-\x08\x0B\x0C\x0E-\x1F]~u', '', $s) ?? $s;
         $s = \preg_replace('~\s+~u', ' ', $s) ?? $s;
+
         return \trim($s);
     }
 
@@ -255,13 +271,15 @@ final class TranslateCommand
      */
     private function simplifyGlossToHeadword(string $gloss, string $target, string $srcToken): ?string
     {
-        if ($gloss === '') return null;
+        if ('' === $gloss) {
+            return null;
+        }
 
         $t = \strtolower($target);
         $srcLower = \mb_strtolower($srcToken);
 
         // Special-case EN "the" → default Spanish article "el"
-        if (($t === 'es' || $t === 'spa') && $srcLower === 'the') {
+        if (('es' === $t || 'spa' === $t) && 'the' === $srcLower) {
             return 'el';
         }
 
@@ -277,11 +295,13 @@ final class TranslateCommand
         // Candidate tokens (letters only)
         \preg_match_all('~\p{L}{2,40}~u', $s, $m);
         $cands = $m[0] ?? [];
-        if (!$cands) return null;
+        if (!$cands) {
+            return null;
+        }
 
         // Preferred Spanish function words
-        $isEs = ($t === 'es' || $t === 'spa');
-        $preferredEs = ['el','la','los','las','un','una','unos','unas','en','a','de','con','por','para','y','o'];
+        $isEs = ('es' === $t || 'spa' === $t);
+        $preferredEs = ['el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'en', 'a', 'de', 'con', 'por', 'para', 'y', 'o'];
 
         if ($isEs) {
             foreach ($cands as $w) {
@@ -294,18 +314,18 @@ final class TranslateCommand
 
         // Junk words to skip when selecting from the end
         static $junk = null;
-        if ($junk === null) {
+        if (null === $junk) {
             $junk = \array_flip([
-                'comp','comparative','superlative','plural','singular','pl','sg',
-                'masc','fem','neut','m','f','n',
-                'of','with','without','having','color','structure','expression','series','scale','position','price','time',
-                'program','demonstration','example','countable','uncountable','often',
-                'a','an','the','at','in','on','to','for','from','by','and','or','as','is','are','be','was','were','this','that','which','who','whom','whose','been','being',
+                'comp', 'comparative', 'superlative', 'plural', 'singular', 'pl', 'sg',
+                'masc', 'fem', 'neut', 'm', 'f', 'n',
+                'of', 'with', 'without', 'having', 'color', 'structure', 'expression', 'series', 'scale', 'position', 'price', 'time',
+                'program', 'demonstration', 'example', 'countable', 'uncountable', 'often',
+                'a', 'an', 'the', 'at', 'in', 'on', 'to', 'for', 'from', 'by', 'and', 'or', 'as', 'is', 'are', 'be', 'was', 'were', 'this', 'that', 'which', 'who', 'whom', 'whose', 'been', 'being',
             ]);
         }
 
         // Choose the last non-junk token
-        for ($i = \count($cands) - 1; $i >= 0; $i--) {
+        for ($i = \count($cands) - 1; $i >= 0; --$i) {
             $lw = \mb_strtolower($cands[$i]);
             if (!isset($junk[$lw])) {
                 return $lw;
@@ -313,7 +333,7 @@ final class TranslateCommand
         }
 
         // Fallback: last token
-        return \mb_strtolower((string)\end($cands));
+        return \mb_strtolower((string) \end($cands));
     }
 
     /** Clip long debug strings. */
@@ -321,6 +341,7 @@ final class TranslateCommand
     {
         $s = \preg_replace('~\s+~u', ' ', $s) ?? $s;
         $s = \trim($s);
-        return (\mb_strlen($s) > $max) ? (\mb_substr($s, 0, $max) . '…') : $s;
+
+        return (\mb_strlen($s) > $max) ? (\mb_substr($s, 0, $max).'…') : $s;
     }
 }
