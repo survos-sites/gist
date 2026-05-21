@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Word Lookup — FreeDict{% endblock %}
+
+{% block body %}
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Word Lookup</h2>
+            <div class="text-muted">Definitions and English translations from FreeDict dictionaries</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ path('app_lookup') }}" class="row g-3 align-items-end">
+            <div class="col">
+                <label class="form-label">Word or term</label>
+                <input type="text" name="word" value="{{ word }}"
+                       class="form-control form-control-lg"
+                       placeholder="e.g. photographie, peinture, Gemälde"
+                       autofocus>
+            </div>
+            <div class="col-auto" style="min-width: 180px">
+                <label class="form-label">Source language</label>
+                <select name="lang" class="form-select form-select-lg">
+                    <option value="">— language —</option>
+                    {% for code in languages %}
+                        <option value="{{ code }}" {{ code == lang ? 'selected' }}>{{ code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    {{ ux_icon('tabler:search') }} Look up
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% for message in app.flashes('warning') %}
+    <div class="alert alert-warning">{{ message }}</div>
+{% endfor %}
+
+{% if word and lang and results is empty %}
+    <div class="alert alert-info">
+        No entries found for <strong>{{ word }}</strong> in <strong>{{ lang }}</strong>.
+    </div>
+{% endif %}
+
+{% for entry in results %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span class="fs-3 fw-bold">{{ entry.lemma }}</span>
+                {% if entry.pos %}
+                    <span class="badge bg-blue-lt text-blue">{{ entry.pos }}</span>
+                {% endif %}
+                {% if entry.gender %}
+                    <span class="badge bg-purple-lt text-purple">{{ entry.gender }}</span>
+                {% endif %}
+                {% if entry.contentType %}
+                    <span class="badge bg-green text-white ms-auto">{{ entry.contentType }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            {% if entry.senses %}
+                <h4 class="subheader mb-2">Definitions</h4>
+                <ul class="mb-3">
+                    {% for gloss in entry.senses %}
+                        <li>{{ gloss }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if entry.translations %}
+                <h4 class="subheader mb-2">English translations</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for t in entry.translations %}
+                        <a href="{{ path('app_lookup', {word: t, lang: 'eng'}) }}"
+                           class="badge bg-azure-lt text-dark fs-6 text-decoration-none">{{ t }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if not entry.senses and not entry.translations %}
+                <span class="text-muted">No definitions or translations found.</span>
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}
+{% endblock %}

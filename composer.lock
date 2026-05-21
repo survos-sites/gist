@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7b6b7a8e6c389cda68263dd549d85e88",
+    "content-hash": "05cf20e154313590c6549b299bf6b840",
     "packages": [
         {
             "name": "api-platform/core",
@@ -306,6 +306,81 @@
                 }
             ],
             "time": "2025-08-20T19:15:30+00:00"
+        },
+        {
+            "name": "dflydev/dot-access-data",
+            "version": "v3.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dflydev/dflydev-dot-access-data.git",
+                "reference": "a23a2bf4f31d3518f3ecb38660c95715dfead60f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dflydev/dflydev-dot-access-data/zipball/a23a2bf4f31d3518f3ecb38660c95715dfead60f",
+                "reference": "a23a2bf4f31d3518f3ecb38660c95715dfead60f",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^0.12.42",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.3",
+                "scrutinizer/ocular": "1.6.0",
+                "squizlabs/php_codesniffer": "^3.5",
+                "vimeo/psalm": "^4.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Dflydev\\DotAccessData\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dragonfly Development Inc.",
+                    "email": "info@dflydev.com",
+                    "homepage": "http://dflydev.com"
+                },
+                {
+                    "name": "Beau Simensen",
+                    "email": "beau@dflydev.com",
+                    "homepage": "http://beausimensen.com"
+                },
+                {
+                    "name": "Carlos Frutos",
+                    "email": "carlos@kiwing.it",
+                    "homepage": "https://github.com/cfrutos"
+                },
+                {
+                    "name": "Colin O'Dell",
+                    "email": "colinodell@gmail.com",
+                    "homepage": "https://www.colinodell.com"
+                }
+            ],
+            "description": "Given a deep data structure, access data by dot notation.",
+            "homepage": "https://github.com/dflydev/dflydev-dot-access-data",
+            "keywords": [
+                "access",
+                "data",
+                "dot",
+                "notation"
+            ],
+            "support": {
+                "issues": "https://github.com/dflydev/dflydev-dot-access-data/issues",
+                "source": "https://github.com/dflydev/dflydev-dot-access-data/tree/v3.0.3"
+            },
+            "time": "2024-07-08T12:26:09+00:00"
         },
         {
             "name": "doctrine/collections",
@@ -2017,6 +2092,195 @@
             "time": "2025-11-30T08:30:04+00:00"
         },
         {
+            "name": "league/commonmark",
+            "version": "2.8.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/commonmark.git",
+                "reference": "59fb075d2101740c337c7216e3f32b36c204218b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/59fb075d2101740c337c7216e3f32b36c204218b",
+                "reference": "59fb075d2101740c337c7216e3f32b36c204218b",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "league/config": "^1.1.1",
+                "php": "^7.4 || ^8.0",
+                "psr/event-dispatcher": "^1.0",
+                "symfony/deprecation-contracts": "^2.1 || ^3.0",
+                "symfony/polyfill-php80": "^1.16"
+            },
+            "require-dev": {
+                "cebe/markdown": "^1.0",
+                "commonmark/cmark": "0.31.1",
+                "commonmark/commonmark.js": "0.31.1",
+                "composer/package-versions-deprecated": "^1.8",
+                "embed/embed": "^4.4",
+                "erusev/parsedown": "^1.0",
+                "ext-json": "*",
+                "github/gfm": "0.29.0",
+                "michelf/php-markdown": "^1.4 || ^2.0",
+                "nyholm/psr7": "^1.5",
+                "phpstan/phpstan": "^1.8.2",
+                "phpunit/phpunit": "^9.5.21 || ^10.5.9 || ^11.0.0",
+                "scrutinizer/ocular": "^1.8.1",
+                "symfony/finder": "^5.3 | ^6.0 | ^7.0 || ^8.0",
+                "symfony/process": "^5.4 | ^6.0 | ^7.0 || ^8.0",
+                "symfony/yaml": "^2.3 | ^3.0 | ^4.0 | ^5.0 | ^6.0 | ^7.0 || ^8.0",
+                "unleashedtech/php-coding-standard": "^3.1.1",
+                "vimeo/psalm": "^4.24.0 || ^5.0.0 || ^6.0.0"
+            },
+            "suggest": {
+                "symfony/yaml": "v2.3+ required if using the Front Matter extension"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "2.9-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\CommonMark\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Colin O'Dell",
+                    "email": "colinodell@gmail.com",
+                    "homepage": "https://www.colinodell.com",
+                    "role": "Lead Developer"
+                }
+            ],
+            "description": "Highly-extensible PHP Markdown parser which fully supports the CommonMark spec and GitHub-Flavored Markdown (GFM)",
+            "homepage": "https://commonmark.thephpleague.com",
+            "keywords": [
+                "commonmark",
+                "flavored",
+                "gfm",
+                "github",
+                "github-flavored",
+                "markdown",
+                "md",
+                "parser"
+            ],
+            "support": {
+                "docs": "https://commonmark.thephpleague.com/",
+                "forum": "https://github.com/thephpleague/commonmark/discussions",
+                "issues": "https://github.com/thephpleague/commonmark/issues",
+                "rss": "https://github.com/thephpleague/commonmark/releases.atom",
+                "source": "https://github.com/thephpleague/commonmark"
+            },
+            "funding": [
+                {
+                    "url": "https://www.colinodell.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://www.paypal.me/colinpodell/10.00",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/colinodell",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/league/commonmark",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-03-19T13:16:38+00:00"
+        },
+        {
+            "name": "league/config",
+            "version": "v1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/config.git",
+                "reference": "754b3604fb2984c71f4af4a9cbe7b57f346ec1f3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/config/zipball/754b3604fb2984c71f4af4a9cbe7b57f346ec1f3",
+                "reference": "754b3604fb2984c71f4af4a9cbe7b57f346ec1f3",
+                "shasum": ""
+            },
+            "require": {
+                "dflydev/dot-access-data": "^3.0.1",
+                "nette/schema": "^1.2",
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.8.2",
+                "phpunit/phpunit": "^9.5.5",
+                "scrutinizer/ocular": "^1.8.1",
+                "unleashedtech/php-coding-standard": "^3.1",
+                "vimeo/psalm": "^4.7.3"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.2-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\Config\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Colin O'Dell",
+                    "email": "colinodell@gmail.com",
+                    "homepage": "https://www.colinodell.com",
+                    "role": "Lead Developer"
+                }
+            ],
+            "description": "Define configuration arrays with strict schemas and access values with dot notation",
+            "homepage": "https://config.thephpleague.com",
+            "keywords": [
+                "array",
+                "config",
+                "configuration",
+                "dot",
+                "dot-access",
+                "nested",
+                "schema"
+            ],
+            "support": {
+                "docs": "https://config.thephpleague.com/",
+                "issues": "https://github.com/thephpleague/config/issues",
+                "rss": "https://github.com/thephpleague/config/releases.atom",
+                "source": "https://github.com/thephpleague/config"
+            },
+            "funding": [
+                {
+                    "url": "https://www.colinodell.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://www.paypal.me/colinpodell/10.00",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/colinodell",
+                    "type": "github"
+                }
+            ],
+            "time": "2022-12-11T20:36:23+00:00"
+        },
+        {
             "name": "mezcalito/ux-search",
             "version": "0.6.0",
             "source": {
@@ -2194,6 +2458,164 @@
                 }
             ],
             "time": "2026-01-02T08:56:05+00:00"
+        },
+        {
+            "name": "nette/schema",
+            "version": "v1.3.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nette/schema.git",
+                "reference": "f0ab1a3cda782dbc5da270d28545236aa80c4002"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nette/schema/zipball/f0ab1a3cda782dbc5da270d28545236aa80c4002",
+                "reference": "f0ab1a3cda782dbc5da270d28545236aa80c4002",
+                "shasum": ""
+            },
+            "require": {
+                "nette/utils": "^4.0",
+                "php": "8.1 - 8.5"
+            },
+            "require-dev": {
+                "nette/phpstan-rules": "^1.0",
+                "nette/tester": "^2.6",
+                "phpstan/extension-installer": "^1.4@stable",
+                "phpstan/phpstan": "^2.1.39@stable",
+                "tracy/tracy": "^2.8"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.3-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Nette\\": "src"
+                },
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause",
+                "GPL-2.0-only",
+                "GPL-3.0-only"
+            ],
+            "authors": [
+                {
+                    "name": "David Grudl",
+                    "homepage": "https://davidgrudl.com"
+                },
+                {
+                    "name": "Nette Community",
+                    "homepage": "https://nette.org/contributors"
+                }
+            ],
+            "description": "📐 Nette Schema: validating data structures against a given Schema.",
+            "homepage": "https://nette.org",
+            "keywords": [
+                "config",
+                "nette"
+            ],
+            "support": {
+                "issues": "https://github.com/nette/schema/issues",
+                "source": "https://github.com/nette/schema/tree/v1.3.5"
+            },
+            "time": "2026-02-23T03:47:12+00:00"
+        },
+        {
+            "name": "nette/utils",
+            "version": "v4.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nette/utils.git",
+                "reference": "7da6c396d7ebe142bc857c20479d5e70a5e1aac7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nette/utils/zipball/7da6c396d7ebe142bc857c20479d5e70a5e1aac7",
+                "reference": "7da6c396d7ebe142bc857c20479d5e70a5e1aac7",
+                "shasum": ""
+            },
+            "require": {
+                "php": "8.2 - 8.5"
+            },
+            "conflict": {
+                "nette/finder": "<3",
+                "nette/schema": "<1.2.2"
+            },
+            "require-dev": {
+                "jetbrains/phpstorm-attributes": "^1.2",
+                "nette/phpstan-rules": "^1.0",
+                "nette/tester": "^2.5",
+                "phpstan/extension-installer": "^1.4@stable",
+                "phpstan/phpstan": "^2.1@stable",
+                "tracy/tracy": "^2.9"
+            },
+            "suggest": {
+                "ext-gd": "to use Image",
+                "ext-iconv": "to use Strings::webalize(), toAscii(), chr() and reverse()",
+                "ext-intl": "to use Strings::webalize(), toAscii(), normalize() and compare()",
+                "ext-json": "to use Nette\\Utils\\Json",
+                "ext-mbstring": "to use Strings::lower() etc...",
+                "ext-tokenizer": "to use Nette\\Utils\\Reflection::getUseStatements()"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "4.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Nette\\": "src"
+                },
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause",
+                "GPL-2.0-only",
+                "GPL-3.0-only"
+            ],
+            "authors": [
+                {
+                    "name": "David Grudl",
+                    "homepage": "https://davidgrudl.com"
+                },
+                {
+                    "name": "Nette Community",
+                    "homepage": "https://nette.org/contributors"
+                }
+            ],
+            "description": "🛠  Nette Utils: lightweight utilities for string & array manipulation, image handling, safe JSON encoding/decoding, validation, slug or strong password generating etc.",
+            "homepage": "https://nette.org",
+            "keywords": [
+                "array",
+                "core",
+                "datetime",
+                "images",
+                "json",
+                "nette",
+                "paginator",
+                "password",
+                "slugify",
+                "string",
+                "unicode",
+                "utf-8",
+                "utility",
+                "validation"
+            ],
+            "support": {
+                "issues": "https://github.com/nette/utils/issues",
+                "source": "https://github.com/nette/utils/tree/v4.1.4"
+            },
+            "time": "2026-05-11T20:49:54+00:00"
         },
         {
             "name": "nyholm/psr7",
@@ -2911,6 +3333,78 @@
             "time": "2024-09-11T13:17:53+00:00"
         },
         {
+            "name": "revolt/event-loop",
+            "version": "v1.0.9",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/revoltphp/event-loop.git",
+                "reference": "44061cf513e53c6200372fc935ac42271566295d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/revoltphp/event-loop/zipball/44061cf513e53c6200372fc935ac42271566295d",
+                "reference": "44061cf513e53c6200372fc935ac42271566295d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "jetbrains/phpstorm-stubs": "^2019.3",
+                "phpunit/phpunit": "^9",
+                "psalm/phar": "6.16.*"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Revolt\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aaron Piotrowski",
+                    "email": "aaron@trowski.com"
+                },
+                {
+                    "name": "Cees-Jan Kiewiet",
+                    "email": "ceesjank@gmail.com"
+                },
+                {
+                    "name": "Christian Lück",
+                    "email": "christian@clue.engineering"
+                },
+                {
+                    "name": "Niklas Keller",
+                    "email": "me@kelunik.com"
+                }
+            ],
+            "description": "Rock-solid event loop for concurrent PHP applications.",
+            "keywords": [
+                "async",
+                "asynchronous",
+                "concurrency",
+                "event",
+                "event-loop",
+                "non-blocking",
+                "scheduler"
+            ],
+            "support": {
+                "issues": "https://github.com/revoltphp/event-loop/issues",
+                "source": "https://github.com/revoltphp/event-loop/tree/v1.0.9"
+            },
+            "time": "2026-05-16T17:55:38+00:00"
+        },
+        {
             "name": "skoro/stardict",
             "version": "0.2.1",
             "source": {
@@ -3036,6 +3530,51 @@
                 }
             ],
             "time": "2026-05-12T14:09:07+00:00"
+        },
+        {
+            "name": "survos/data-contracts",
+            "version": "2.4.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/survos/data-contracts.git",
+                "reference": "1b62b0603626d66fd7a67024f41cc16908d4d54a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/survos/data-contracts/zipball/1b62b0603626d66fd7a67024f41cc16908d4d54a",
+                "reference": "1b62b0603626d66fd7a67024f41cc16908d4d54a",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "^13.0",
+                "symplify/easy-coding-standard": "^13.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Survos\\DataContracts\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Shared data vocabularies, content metadata, and item DTO contracts for Survos data/media/import packages.",
+            "support": {
+                "issues": "https://github.com/survos/data-contracts/issues",
+                "source": "https://github.com/survos/data-contracts/tree/2.4.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/kbond",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-05-19T16:03:33+00:00"
         },
         {
             "name": "survos/deployment-bundle",
@@ -3482,6 +4021,69 @@
                 }
             ],
             "time": "2026-05-19T16:03:51+00:00"
+        },
+        {
+            "name": "survos/tui-extras-bundle",
+            "version": "2.4.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/survos/tui-extras-bundle.git",
+                "reference": "92dab7e8338993fa590a006690c183967a4bab0c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/survos/tui-extras-bundle/zipball/92dab7e8338993fa590a006690c183967a4bab0c",
+                "reference": "92dab7e8338993fa590a006690c183967a4bab0c",
+                "shasum": ""
+            },
+            "require": {
+                "league/commonmark": "^2.0",
+                "php": "^8.1",
+                "symfony/finder": "^8.1",
+                "symfony/tui": "^8.1",
+                "tempest/highlight": "^2.0"
+            },
+            "suggest": {
+                "doctrine/dbal": "For DoctrineTableSource",
+                "survos/field-bundle": "For FieldDescriptor-based column definitions via TuiColumn::fromFieldDescriptor()"
+            },
+            "bin": [
+                "bin/browse"
+            ],
+            "type": "symfony-bundle",
+            "extra": {
+                "symfony": {
+                    "require": "^8.1"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Survos\\TuiExtrasBundle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Extra TUI widgets and data source abstractions for symfony/tui",
+            "keywords": [
+                "datatable",
+                "symfony",
+                "terminal",
+                "tui",
+                "widget"
+            ],
+            "support": {
+                "issues": "https://github.com/survos/tui-extras-bundle/issues",
+                "source": "https://github.com/survos/tui-extras-bundle/tree/2.4.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/kbond",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-05-15T16:22:16+00:00"
         },
         {
             "name": "symfony/asset",
@@ -8431,6 +9033,84 @@
             "time": "2026-01-05T13:30:16+00:00"
         },
         {
+            "name": "symfony/tui",
+            "version": "v8.1.0-BETA3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/tui.git",
+                "reference": "f9999025c27d3fa03106e5f7187181126e5bdd2c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/tui/zipball/f9999025c27d3fa03106e5f7187181126e5bdd2c",
+                "reference": "f9999025c27d3fa03106e5f7187181126e5bdd2c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.4.1",
+                "revolt/event-loop": "^1.0",
+                "symfony/event-dispatcher": "^8.0",
+                "symfony/string": "^8.0"
+            },
+            "require-dev": {
+                "league/commonmark": "^2.9",
+                "tempest/highlight": "^2.16"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Tui\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides a terminal UI framework for building rich, interactive CLI applications in PHP",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "cli",
+                "console",
+                "terminal",
+                "tui"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/tui/tree/v8.1.0-BETA3"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-05-19T20:20:07+00:00"
+        },
+        {
             "name": "symfony/twig-bridge",
             "version": "v8.1.0-BETA3",
             "source": {
@@ -9685,6 +10365,65 @@
             "time": "2026-05-20T09:18:51+00:00"
         },
         {
+            "name": "tempest/highlight",
+            "version": "2.25.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tempestphp/highlight.git",
+                "reference": "ec0bb3353912244bd04acb7155694d3ea352f53f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tempestphp/highlight/zipball/ec0bb3353912244bd04acb7155694d3ea352f53f",
+                "reference": "ec0bb3353912244bd04acb7155694d3ea352f53f",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "require-dev": {
+                "assertchris/ellison": "^1.0.2",
+                "friendsofphp/php-cs-fixer": "^3.84",
+                "league/commonmark": "^2.4",
+                "phpbench/phpbench": "^1.4",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^12.0",
+                "symfony/var-dumper": "^6.4|^7.0|^8.0"
+            },
+            "suggest": {
+                "assertchris/ellison": "Allows you to analyse sentence complexity",
+                "league/commonmark": "Adds markdown support"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tempest\\Highlight\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Brent Roose",
+                    "email": "brendt@stitcher.io"
+                }
+            ],
+            "description": "Fast, extensible, server-side code highlighting",
+            "support": {
+                "issues": "https://github.com/tempestphp/highlight/issues",
+                "source": "https://github.com/tempestphp/highlight/tree/2.25.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/brendt",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-05-19T07:56:07+00:00"
+        },
+        {
             "name": "twig/extra-bundle",
             "version": "v3.24.0",
             "source": {
@@ -10311,6 +11050,449 @@
         }
     ],
     "packages-dev": [
+        {
+            "name": "jawira/db-draw",
+            "version": "v1.8.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/db-draw.git",
+                "reference": "12225f1e171740731063d6ba956b1acb9ceca1aa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/db-draw/zipball/12225f1e171740731063d6ba956b1acb9ceca1aa",
+                "reference": "12225f1e171740731063d6ba956b1acb9ceca1aa",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": "^3.3 || ^4.0",
+                "jawira/doctrine-diagram-contracts": "^1.0",
+                "jawira/the-lost-functions": "^1.1",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "ext-dom": "*",
+                "ext-mbstring": "*",
+                "ext-xml": "*",
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "jawira/plantuml": "^1.2024.6",
+                "jawira/plantuml-client": "^1.0.3",
+                "jawira/skeleton": "^2.24.1",
+                "phpstan/phpstan": "^1.12.2",
+                "phpunit/phpunit": "^9.6.20"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jawira\\DbDraw\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal"
+                }
+            ],
+            "description": "📐 Takes a DoctrineORM connection and generates a database diagram in .puml format",
+            "homepage": "https://jawira.github.io/db-draw/",
+            "keywords": [
+                "database",
+                "db",
+                "dbal",
+                "diagram",
+                "doctrine",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/jawira/db-draw/issues",
+                "source": "https://github.com/jawira/db-draw/tree/v1.8.1"
+            },
+            "time": "2025-04-12T10:18:25+00:00"
+        },
+        {
+            "name": "jawira/doctrine-diagram-bundle",
+            "version": "v1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/doctrine-diagram-bundle.git",
+                "reference": "46840aef3bf860ad48bab4047aec5418e5f7129b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/doctrine-diagram-bundle/zipball/46840aef3bf860ad48bab4047aec5418e5f7129b",
+                "reference": "46840aef3bf860ad48bab4047aec5418e5f7129b",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/doctrine-bundle": "^2.5 || ^3.0",
+                "doctrine/orm": "^2.9 || ^3.0",
+                "jawira/db-draw": "^1.6",
+                "jawira/doctrine-diagram-contracts": "^1.0",
+                "jawira/entity-draw": "^1.0",
+                "jawira/plantuml-client": "^1.0",
+                "jawira/plantuml-to-image": "^1.1",
+                "php": "^8.1",
+                "symfony/config": "^6.0 || ^7.0 || ^8.0",
+                "symfony/console": "^6.0 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.0 || ^7.0 || ^8.0",
+                "symfony/filesystem": "^6.0 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.0 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "ergebnis/composer-normalize": "^2.42",
+                "friendsofphp/php-cs-fixer": "^3.54",
+                "jawira/plantuml": "^1.2024.4",
+                "jawira/skeleton": "^2.22",
+                "phpstan/extension-installer": "^1.3.1",
+                "phpstan/phpstan": "^1.10.67",
+                "phpstan/phpstan-symfony": "^1.3.12"
+            },
+            "suggest": {
+                "jawira/plantuml": "Install PlantUML executable/jar with Composer."
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Jawira\\DoctrineDiagramBundle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal",
+                    "homepage": "https://jawira.com"
+                }
+            ],
+            "description": "📐 Symfony Bundle to generate database diagrams",
+            "homepage": "https://github.com/jawira/doctrine-diagram-bundle",
+            "keywords": [
+                "database",
+                "dev",
+                "diagram",
+                "doctrine",
+                "symfony-bundle",
+                "uml"
+            ],
+            "support": {
+                "docs": "https://jawira.github.io/doctrine-diagram-bundle",
+                "issues": "https://github.com/jawira/doctrine-diagram-bundle/issues",
+                "source": "https://github.com/jawira/doctrine-diagram-bundle/tree/v1.2.0"
+            },
+            "time": "2025-11-30T21:12:29+00:00"
+        },
+        {
+            "name": "jawira/doctrine-diagram-contracts",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/doctrine-diagram-contracts.git",
+                "reference": "a00c63c87376b67d61d045e0d82e6b6560c79a59"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/doctrine-diagram-contracts/zipball/a00c63c87376b67d61d045e0d82e6b6560c79a59",
+                "reference": "a00c63c87376b67d61d045e0d82e6b6560c79a59",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.68",
+                "jawira/skeleton": "^2.26"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jawira\\DoctrineDiagramContracts\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal",
+                    "email": "dev@tugal.be"
+                }
+            ],
+            "description": "Generic abstractions related to Doctrine Diagram Bundle",
+            "support": {
+                "issues": "https://github.com/jawira/doctrine-diagram-contracts/issues",
+                "source": "https://github.com/jawira/doctrine-diagram-contracts/tree/v1.0.0"
+            },
+            "time": "2025-01-27T21:37:53+00:00"
+        },
+        {
+            "name": "jawira/entity-draw",
+            "version": "v1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/entity-draw.git",
+                "reference": "fece7e5f8f680238afc0e89e5d769c6f87e018cf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/entity-draw/zipball/fece7e5f8f680238afc0e89e5d769c6f87e018cf",
+                "reference": "fece7e5f8f680238afc0e89e5d769c6f87e018cf",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/orm": "^2.9 || ^3",
+                "jawira/doctrine-diagram-contracts": "^v1",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^v3.75",
+                "jawira/skeleton": "^v2.27",
+                "phpunit/phpunit": "^10.5",
+                "vimeo/psalm": "6.7.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jawira\\EntityDraw\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal"
+                }
+            ],
+            "description": "This library generates class diagrams from your Doctrine ORM entities.",
+            "support": {
+                "issues": "https://github.com/jawira/entity-draw/issues",
+                "source": "https://github.com/jawira/entity-draw/tree/v1.0.2"
+            },
+            "time": "2025-05-15T21:04:20+00:00"
+        },
+        {
+            "name": "jawira/plantuml-client",
+            "version": "v1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/plantuml-client.git",
+                "reference": "28ca92b4e0825bd7f3a82fed10c7f3dbe0657fd5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/plantuml-client/zipball/28ca92b4e0825bd7f3a82fed10c7f3dbe0657fd5",
+                "reference": "28ca92b4e0825bd7f3a82fed10c7f3dbe0657fd5",
+                "shasum": ""
+            },
+            "require": {
+                "jawira/plantuml-encoding": "^1.0",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "ergebnis/composer-normalize": "^2.13",
+                "ext-fileinfo": "*",
+                "jawira/skeleton": "^2.16",
+                "phpstan/phpstan": "^1.8",
+                "phpunit/phpunit": "^9.5"
+            },
+            "suggest": {
+                "pds/skeleton": "Standard PHP package skeleton."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jawira\\PlantUmlClient\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal",
+                    "email": "dev@tugal.be"
+                }
+            ],
+            "description": "Convert PlantUML diagrams into images.",
+            "keywords": [
+                "diagram",
+                "image",
+                "plantuml",
+                "uml"
+            ],
+            "support": {
+                "issues": "https://github.com/jawira/plantuml-client/issues",
+                "source": "https://github.com/jawira/plantuml-client/tree/v1.0.3"
+            },
+            "time": "2022-11-08T23:48:25+00:00"
+        },
+        {
+            "name": "jawira/plantuml-encoding",
+            "version": "v1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/plantuml-encoding.git",
+                "reference": "fe8bce2d7ff5bb5cccf374349999cef7d6246a32"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/plantuml-encoding/zipball/fe8bce2d7ff5bb5cccf374349999cef7d6246a32",
+                "reference": "fe8bce2d7ff5bb5cccf374349999cef7d6246a32",
+                "shasum": ""
+            },
+            "require": {
+                "ext-zlib": "*",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/plantuml_functions.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal",
+                    "homepage": "https://jawira.com"
+                }
+            ],
+            "description": "PlantUML encoding functions",
+            "keywords": [
+                "encodep",
+                "encoding",
+                "functions",
+                "plantuml",
+                "uml"
+            ],
+            "support": {
+                "issues": "https://github.com/jawira/plantuml-encoding/issues",
+                "source": "https://github.com/jawira/plantuml-encoding/tree/v1.1.1"
+            },
+            "time": "2024-12-22T17:49:30+00:00"
+        },
+        {
+            "name": "jawira/plantuml-to-image",
+            "version": "v1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jawira/plantuml-to-image.git",
+                "reference": "0e99749b330c5203dbb6f3b63c0147bd56ff6039"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jawira/plantuml-to-image/zipball/0e99749b330c5203dbb6f3b63c0147bd56ff6039",
+                "reference": "0e99749b330c5203dbb6f3b63c0147bd56ff6039",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1",
+                "symfony/process": "^6.0 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "ext-libxml": "*",
+                "ext-simplexml": "*",
+                "friendsofphp/php-cs-fixer": "^3.68",
+                "jawira/plantuml": "^1.2022",
+                "jawira/skeleton": "^2.16",
+                "jawira/the-lost-functions": "^1.5.0",
+                "phpunit/phpunit": "^10",
+                "vimeo/psalm": "^6.0"
+            },
+            "suggest": {
+                "jawira/plantuml": "Provides PlantUml (jar and executable)"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jawira\\PlantUmlToImage\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal",
+                    "email": "dev@tugal.be"
+                }
+            ],
+            "description": "PlantUml wrapper to convert puml diagrams to images.",
+            "support": {
+                "issues": "https://github.com/jawira/plantuml-to-image/issues",
+                "source": "https://github.com/jawira/plantuml-to-image/tree/v1.2.0"
+            },
+            "time": "2025-11-30T23:59:51+00:00"
+        },
+        {
+            "name": "jawira/the-lost-functions",
+            "version": "v1.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://gitlab.com/jawira/the-lost-functions.git",
+                "reference": "eda63129bab2f668dc38ca81c4664247c50ca36a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/api/v4/projects/jawira%2Fthe-lost-functions/repository/archive.zip?sha=eda63129bab2f668dc38ca81c4664247c50ca36a",
+                "reference": "eda63129bab2f668dc38ca81c4664247c50ca36a",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "ergebnis/composer-normalize": "^2",
+                "ext-mbstring": "*",
+                "friendsofphp/php-cs-fixer": "^3",
+                "jawira/skeleton": "^2",
+                "phpunit/phpunit": "^9"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jawira Portugal",
+                    "email": "dev@tugal.be"
+                }
+            ],
+            "description": "Collection of convenience functions.",
+            "keywords": [
+                "Year",
+                "array",
+                "function",
+                "get_class",
+                "is_initialized"
+            ],
+            "support": {
+                "issues": "https://gitlab.com/jawira/the-lost-functions/-/issues",
+                "source": "https://gitlab.com/jawira/the-lost-functions/-/tree/v1.8.0"
+            },
+            "time": "2026-01-16T22:34:21+00:00"
+        },
         {
             "name": "jetbrains/phpstorm-stubs",
             "version": "v2026.1",
@@ -12747,7 +13929,9 @@
     ],
     "aliases": [],
     "minimum-stability": "beta",
-    "stability-flags": {},
+    "stability-flags": {
+        "symfony/tui": 10
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

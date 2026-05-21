@@ -15,8 +15,9 @@ use App\Repository\FreeDictCatalogRepository;
 use App\Repository\LanguageRepository;
 use App\Repository\LemmaRepository;
 use App\Repository\TranslationRepository;
+use App\Tui\ImportDashboard;
+use App\Tui\ImportProcess;
 use App\Workflow\IFreeDictCatalogWorkflow as WF;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Console\Attribute\Argument;
@@ -33,6 +34,7 @@ final class TeiImportService
     public function __construct(
         private readonly HttpClientInterface $http,
         #[Autowire('%app.data_dir%')] private readonly string $dataDir,
+        #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
         private readonly Filesystem $fs,
         private readonly ManagerRegistry $doctrine,
         private readonly FreeDictCatalogRepository $catalogRepo,
@@ -78,10 +80,16 @@ final class TeiImportService
             $row,
             truncate: $force,
             limit: $limit,
-            progress: function (int $n) use (&$count, $io) {
+            progress: function (int $n) use (&$count, $io, $row) {
                 $count = $n;
                 if (0 === $n % 1000) {
-                    $io->writeln("  … $n entries");
+                    $total = $row->headwords;
+                    if ($total) {
+                        $pct = (int) ($n / $total * 100);
+                        $io->writeln("  [{$row->name}] $n of $total entries ($pct%)");
+                    } else {
+                        $io->writeln("  [{$row->name}] $n entries");
+                    }
                 }
             }
         );
@@ -103,12 +111,22 @@ final class TeiImportService
         ?int $limit = null,
         #[Option('Max number of pairs to import', shortcut: 'M')]
         ?int $maxPairs = null,
+        #[Option('Only import pairs with this destination language, e.g. eng', shortcut: 'd')]
+        ?string $dst = null,
     ): int {
         $io->title('FreeDict: Import All TEI Pairs');
 
         $candidates = $force
             ? $this->catalogRepo->findAll()
-            : $this->catalogRepo->findByMarking(WF::PLACE_NEW);
+            : [
+                ...$this->catalogRepo->findByMarking(WF::PLACE_NEW),
+                ...$this->catalogRepo->findByMarking(WF::PLACE_DOWNLOADED),
+            ];
+
+        if ($dst !== null) {
+            $candidates = array_values(array_filter($candidates, fn($c) => $c->dst === $dst));
+            $io->writeln(sprintf('Filtered to %d pair(s) with dst=%s.', count($candidates), $dst));
+        }
 
         if (!$candidates) {
             $io->success('Nothing to import — all pairs already processed. Use --force to reimport.');
@@ -158,6 +176,45 @@ final class TeiImportService
         $io->success(sprintf('Done. Imported: %d, Skipped: %d, Failed: %d', $imported, $skipped, $failed));
 
         return $failed > 0 ? Command::FAILURE : Command::SUCCESS;
+    }
+
+    #[AsCommand('app:tei:import:ui', 'Monitor FreeDict TEI pair imports in a TUI dashboard')]
+    public function importUi(
+        SymfonyStyle $io,
+        #[Option('Force reimport of already-processed pairs', shortcut: 'f')]
+        bool $force = false,
+        #[Option('Only import pairs with this destination language, e.g. eng', shortcut: 'd')]
+        ?string $dst = null,
+    ): int {
+        $candidates = $force
+            ? $this->catalogRepo->findAll()
+            : [
+                ...$this->catalogRepo->findByMarking(WF::PLACE_NEW),
+                ...$this->catalogRepo->findByMarking(WF::PLACE_DOWNLOADED),
+            ];
+
+        if ($dst !== null) {
+            $candidates = array_values(array_filter($candidates, fn ($c) => $c->dst === $dst));
+        }
+
+        // skip pairs with no release URL — they would immediately fail
+        $candidates = array_values(array_filter($candidates, fn ($c) => '' !== $this->pickTeiUrl($c)[0]));
+
+        if (!$candidates) {
+            $io->success('Nothing to import. Use --force to reimport processed pairs.');
+
+            return Command::SUCCESS;
+        }
+
+        $processes = array_map(
+            fn (FreeDictCatalog $c) => new ImportProcess($c->name, (int) $c->headwords),
+            $candidates,
+        );
+
+        // smallest first — quick wins visible early, deu-eng 517K runs last
+        usort($processes, fn (ImportProcess $a, ImportProcess $b) => $a->total <=> $b->total);
+
+        return (new ImportDashboard($processes, $this->projectDir, $force))->run();
     }
 
     // =========================================================================
@@ -243,6 +300,7 @@ final class TeiImportService
 
         $pair = $catalog->name;
         $this->currentPair = $pair;
+        $this->lemmaRepo->resetCache();
         [$srcCode, $dstCode] = \explode('-', $pair, 2);
 
         $src = $this->langRepo->getOrCreate($srcCode, null, $srcCode);
@@ -318,7 +376,7 @@ final class TeiImportService
             }
 
             $tRank = 1;
-            foreach ($this->texts($xp, '//tei:sense//tei:cit[@type="translation"]//tei:quote') as $tw) {
+            foreach ($this->texts($xp, '//tei:sense//tei:cit[@type="translation" or @type="trans"]//tei:quote') as $tw) {
                 $tw = \trim($tw);
                 if ('' === $tw) {
                     continue;
@@ -335,13 +393,7 @@ final class TeiImportService
 
             ++$batch;
             if (0 === $batch % 1000) {
-                try {
-                    $this->safeFlush();
-                } catch (UniqueConstraintViolationException) {
-                    // ignore dup races
-                } catch (\Throwable) {
-                    // swallow; refreshManagers will reopen EM
-                }
+                $this->safeFlush();
             }
 
             if ($progress) {
@@ -353,12 +405,7 @@ final class TeiImportService
         }
 
         $reader->close();
-
-        try {
-            $this->safeFlush();
-        } catch (UniqueConstraintViolationException) {
-            // ignore
-        }
+        $this->safeFlush();
 
         return $dict;
     }
@@ -382,7 +429,9 @@ final class TeiImportService
         $archive = "$base/src.tar.xz";
         $this->download($teiUrl, $archive);
         $this->run('tar -xJf '.\escapeshellarg($archive).' -C '.\escapeshellarg($base));
-        $tei = $this->findFirst($base, '/\.(tei|xml)$/i');
+        // Prefer .tei (actual dictionary) over .xml (often schema/DTD files)
+        $tei = $this->findFirst($base, '/\.tei$/i')
+            ?? $this->findFirst($base, '/\.(tei|xml)$/i');
         if (!$tei) {
             throw new \RuntimeException("No TEI/XML found inside $archive");
         }
@@ -428,9 +477,11 @@ final class TeiImportService
         if (!$this->em->isOpen()) {
             $this->doctrine->resetManager();
         }
-        $this->em = $this->doctrine->getManager();
-        $this->langRepo = $this->em->getRepository(Language::class);
-        $this->dictRepo = $this->em->getRepository(Dictionary::class);
+        // Always re-bind repos to the current EM so stale repo instances
+        // from a previous catalog import don't reference detached entities.
+        $this->em        = $this->doctrine->getManager();
+        $this->langRepo  = $this->em->getRepository(Language::class);
+        $this->dictRepo  = $this->em->getRepository(Dictionary::class);
         $this->lemmaRepo = $this->em->getRepository(Lemma::class);
         $this->transRepo = $this->em->getRepository(Translation::class);
     }
@@ -471,8 +522,8 @@ final class TeiImportService
     private function shortGender(?string $g): ?string
     {
         return match (\mb_strtolower(\trim((string) $g))) {
-            'masculine', 'm' => 'm',
-            'feminine', 'f' => 'f',
+            'masculine', 'masc', 'm' => 'm',
+            'feminine', 'fem', 'f' => 'f',
             'neuter', 'n' => 'n',
             default => null,
         };

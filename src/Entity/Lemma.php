@@ -14,6 +14,7 @@ use Survos\FieldBundle\Attribute\Field;
 #[ORM\Table(name: 'lemma')]
 #[ORM\Index(columns: ['headword'])]
 #[ORM\Index(columns: ['norm_headword'])]
+#[ORM\Index(name: 'idx_lang_norm_headword', columns: ['language_id', 'norm_headword'])]
 #[ORM\UniqueConstraint(name: 'uniq_lang_head_pos', columns: ['language_id', 'headword', 'pos'])]
 #[EntityMeta(icon: 'tabler:letter-case', group: 'Dictionary', label: 'Lemma', description: 'Dictionary headword entry')]
 class Lemma
@@ -23,7 +24,7 @@ class Lemma
     #[ORM\Column]
     public int $id;
 
-    #[ORM\ManyToOne(targetEntity: Language::class)]
+    #[ORM\ManyToOne(targetEntity: Language::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     #[ApiProperty(description: 'Language this lemma belongs to')]
     public Language $language;

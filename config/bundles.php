@@ -28,4 +28,5 @@ return [
     Symfony\UX\LiveComponent\LiveComponentBundle::class => ['all' => true],
     Mezcalito\UxSearchBundle\MezcalitoUxSearchBundle::class => ['all' => true],
     Survos\SearchBundle\SurvosSearchBundle::class => ['all' => true],
+    Jawira\DoctrineDiagramBundle\DoctrineDiagramBundle::class => ['dev' => true, 'test' => true],
 ];

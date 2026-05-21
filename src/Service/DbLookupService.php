@@ -7,10 +7,13 @@ namespace App\Service;
 
 use App\Entity\Language;
 use App\Entity\Lemma;
+use App\Entity\Sense;
 use App\Repository\LanguageRepository;
 use App\Repository\LemmaRepository;
+use App\Repository\SenseRepository;
 use App\Repository\TranslationRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Survos\DataContracts\Metadata\ContentType;
 
 final class DbLookupService
 {
@@ -18,8 +21,9 @@ final class DbLookupService
         private readonly EntityManagerInterface $em,
         private readonly LanguageRepository $langRepo,
         private readonly LemmaRepository $lemmaRepo,
+        private readonly SenseRepository $senseRepo,
         private readonly TranslationRepository $translationRepo,
-        private readonly MorphHelper $morph, // << new helper
+        private readonly MorphHelper $morph,
     ) {
     }
 
@@ -82,6 +86,75 @@ final class DbLookupService
         return \array_map('strval', $rows);
     }
 
+    /**
+     * Full resolution for a single word: lemma(s), senses, English translations, ContentType.
+     * Returns array of match groups (one per POS variant found).
+     */
+    public function resolve(string $srcCode, string $word): array
+    {
+        $src = $this->requireLang($srcCode);
+        $eng = $this->langRepo->findOneBy(['code3' => 'eng']);
+        $norm = LemmaRepository::normalize($word);
+
+        $lemmas = $this->em->createQueryBuilder()
+            ->select('le')
+            ->from(Lemma::class, 'le')
+            ->where('le.language = :lang AND (le.headword = :h OR le.norm_headword = :n)')
+            ->setParameter('lang', $src->id)
+            ->setParameter('h', $word)
+            ->setParameter('n', $norm)
+            ->getQuery()->getResult();
+
+        if (!$lemmas) {
+            return [];
+        }
+
+        $conn = $this->em->getConnection();
+        $results = [];
+
+        foreach ($lemmas as $lemma) {
+            \assert($lemma instanceof Lemma);
+
+            $senses = $this->senseRepo->findBy(['lemma' => $lemma], ['rank' => 'ASC']);
+            $glosses = array_map(fn(Sense $s) => $s->gloss, array_filter($senses, fn(Sense $s) => $s->gloss !== null));
+
+            $translations = [];
+            if ($eng) {
+                $rows = $conn->fetchAllAssociative(<<<SQL
+                    SELECT ld.headword, t.rank
+                    FROM translation t
+                    JOIN lemma ld ON ld.id = t.dst_lemma_id
+                    WHERE t.src_lemma_id = :src AND ld.language_id = :dst
+                    ORDER BY COALESCE(t.rank, 100000), ld.headword
+                    LIMIT 10
+                SQL, ['src' => $lemma->id, 'dst' => $eng->id]);
+                $translations = array_column($rows, 'headword');
+            }
+
+            // ContentType resolution: first English translation that matches
+            $contentType = null;
+            foreach ($translations as $term) {
+                $ct = ContentType::lookupGenreType($term, ContentType::GENRE_SPECIFIC_MAP, ContentType::GENRE_BASIC_MAP);
+                if ($ct) {
+                    $contentType = $ct;
+                    break;
+                }
+            }
+
+            $results[] = [
+                'lemma'        => $lemma->headword,
+                'norm'         => $lemma->norm_headword,
+                'pos'          => $lemma->pos,
+                'gender'       => $lemma->gender,
+                'senses'       => $glosses,
+                'translations' => $translations,
+                'contentType'  => $contentType,
+            ];
+        }
+
+        return $results;
+    }
+
     /* -------------------------- internals -------------------------- */
 
     private function translateToken(Language $src, Language $dst, string $word, int $maxAlternates): string
@@ -130,7 +203,9 @@ final class DbLookupService
             ->from(Lemma::class, 'le')
             ->where('le.language = :lang AND (le.headword = :h OR le.norm_headword = :n)')
             ->setMaxResults(5)
-            ->setParameters(['lang' => $src->id, 'h' => $token, 'n' => $norm]);
+            ->setParameter('lang', $src->id)
+            ->setParameter('h', $token)
+            ->setParameter('n', $norm);
 
         /** @var list<Lemma> $lemmas */
         $lemmas = $qb->getQuery()->getResult();

@@ -1,64 +1,133 @@
-# FreeDict Translation Server — Fast & Rough
+# gist — FreeDict Vocabulary Resolution Service
 
-# load catalog (if not already)
-bin/console app:load
+A Symfony 8.1 app that imports [FreeDict](https://freedict.org) bilingual dictionaries (TEI P5 XML) into PostgreSQL and exposes word-level lookup and vocabulary classification as an API.
 
-# import all TEI-capable pairs (limit to 3 pairs while testing)
-bin/console app:tei:import:all -M 3 -L 500
+**Primary use case:** given foreign-language keywords (e.g. French museum genre terms), return English translations and a [`ContentType`](https://github.com/survos/data-contracts) classification slug (`photograph`, `drawing`, `painting`, etc.). Used by md/ssai/zm to classify records that arrive with non-English metadata.
 
-# verify counts
-open http://127.0.0.1:8000/admin
-
-# try translation using DB (engine=db)
-curl -X POST http://127.0.0.1:8000/translate \
--H 'Content-Type: application/json' \
--d '{"q":"hello","source":"eng","target":"spa","mode":"text","engine":"db"}'
-
-
-
-A tiny **LibreTranslate‑style** server that uses **FreeDict** dictionaries for **fast word‑by‑word** translation. It favors speed and zero external services over quality. You can later swap in a real MT engine or import the dictionaries into a database for stateless deployments.
-
-- PHP **8.4**, Symfony **7.3**
-- Reads **FreeDict** StarDict bundles (WikDict‐based)
-- Handles `.tar.xz` (system tar), `.idx.gz`, `.dict.dz` (auto‑gunzip when needed)
-- HTTP: `/languages`, `/translate` (`mode=text|rules`)
-- UI: **home page** `/` (uses the service directly or the HTTP API toggle)
-- CLI: load catalog, browse dictionaries, debug low‑level entries
-
-> ⚠️ Quality is intentionally crude. Unknown tokens remain unchanged.
+> Single-word dictionary lookup is more accurate than LibreTranslate/Bing/DeepL for isolated vocabulary terms — FreeDict gives exact lexical translations with POS, not sentence-context guesses.
 
 ---
 
-## 1) Requirements
+## Quick start
 
-**System**
-- Linux/macOS with:
-    - `tar` **with xz** support (Debian/Ubuntu: `sudo apt-get install xz-utils`)
-    - PHP: `ext-json`, `ext-dom`, `ext-libxml`, `ext-zlib`, `ext-bz2`
-
-**Composer packages**
 ```bash
-composer require symfony/http-client symfony/filesystem symfony/intl skoro/stardict
+# 1. Install
+composer install
+php bin/console doctrine:schema:create
 
+# 2. Load the FreeDict catalog (~305 language pairs)
+php bin/console app:load
 
+# 3. Import *→English pairs (needed for vocabulary classification)
+php bin/console app:tei:import:all --dst=eng -v
 
+# 4. Browse
+open https://gist.wip/
+```
 
+## Environment
 
-Can you write up a README about how to install and run?
+```dotenv
+DATABASE_URL=postgresql://...
+APP_DATA_DIR=/mnt/x10/gist   # where TEI archives and extracted files are cached
+```
 
-I'm not sure the dict format gets us what we really need.  Is there a base format that all the dictionaries use, the "source"?  I imagine it's in XML and we can parse it and skip these add-ons.
+`APP_DATA_DIR` should point to persistent storage — TEI archives are large (~10–200MB per pair) and slow to re-download.
 
-These are other formats I read about:
+---
 
-freedict-p5 (TEI P5 XML - most detailed)
-tei (TEI XML)
+## Commands
 
+```bash
+# Catalog
+app:load [--reset]                        # fetch freedict-database.json, upsert catalog
 
-Also, add a --format=json to the browse command, and dump ALL the data we know about a record in a json format, so we canfigure out how to deploy (e.g. dictionary files, or import everything into a postgres database).
-I was thinking if we moved it to a database, we'd have less parsing to deal with.  Plus, I wouldn't need to set up persistent storage on the server.  Finally, we could add our own API for fetching data from the database.
+# Import (TEI XML → Postgres)
+app:tei:import <pair>                     # single pair, e.g. fra-eng
+app:tei:import:all [--dst=eng] [-M 5]    # all pairs; --dst filters by destination language
 
-SOmething's wrong -- a simple English to Spanish 'hello' produces this:
+# Browse (StarDict binary format, for debugging)
+app:browse <pair> [--format=json]         # first record from a StarDict pair
+app:browse:all [--limit=10]               # loop through all StarDict pairs
 
-LibreUiController.php on line 79:
-"/həˈloʊ/, /həˈloː/, /həˈləʉ/, /həˈləʊ/, /hɛˈloʊ/, /hɛˈloː/, /hɛˈləʊ/, /ˈhɛlo/, /ˈhɛloʊ/, /ˈhɛloː/ interjectionA greeting (salutation) said when meeting someone or acknowledging someone’s arrival or presence.holabuenas tardesbuenos díasqué talA greeting used when answering the telephone.holadígamealódigabuenooigoA call for response if it is not clear if anyone is present or listening, or if a telephone conversation may have been disconnected.aló[[hola|¡Hola!]] [[hay alguien|¿Hay alguien?]] ◀"
+# Workflow (via Symfony Messenger)
+survos:state:iterate FreeDictCatalog --transition=download   # dispatch downloads
+messenger:consume freedictcatalog.download                   # process download queue
+messenger:consume freedictcatalog.process                    # process import queue
+```
 
+---
+
+## API
+
+### `GET /lookup?word=photographie&lang=fra`
+Web UI — shows definitions, English translations, and ContentType classification.
+
+### `GET|POST /translate`
+LibreTranslate-compatible endpoint. Drop-in replacement for testing without installing LibreTranslate.
+
+```bash
+curl -X POST https://gist.wip/translate \
+  -H 'Content-Type: application/json' \
+  -d '{"q":"photographie","source":"fra","target":"eng"}'
+```
+
+### `POST /resolve` _(coming soon)_
+Vocabulary classification endpoint — returns ContentType slug per keyword.
+
+```bash
+curl -X POST https://gist.wip/resolve \
+  -H 'Content-Type: application/json' \
+  -d '{"keywords":["photographie","peinture"],"lang":"fra"}'
+# → {"photographie":{"type":"photograph","score":1.0},"peinture":{"type":"painting","score":1.0}}
+```
+
+---
+
+## Architecture
+
+```
+FreeDict catalog JSON
+        ↓  app:load
+FreeDictCatalog table (305 pairs)
+        ↓  TRANSITION_DOWNLOAD
+TEI archive → /APP_DATA_DIR/tei/{pair}/{pair}.tei
+        ↓  TRANSITION_PROCESS
+Language / Lemma / Sense / Translation tables
+        ↓  DbLookupService::resolve()
+ContentType slug (via survos/data-contracts)
+```
+
+**Workflow states:** `new` → `downloaded` → `processed`
+
+**Translation cache:** results are stored in `survos/babel-bundle`'s `Str`/`StrTranslation` entities in the calling app. `text = null` means "gist was asked and had no answer" — avoids re-querying for unknown terms.
+
+---
+
+## Data model
+
+| Table | Contents |
+|---|---|
+| `freedict_catalog` | 305 language pairs from freedict.org, with workflow marking |
+| `lang` | ISO 639-3 language codes |
+| `dictionary` | Imported pair metadata (release, TEI URL) |
+| `lemma` | Headwords with POS, gender, normalized form |
+| `sense` | Definitions/glosses per lemma |
+| `translation` | Directed edges: src lemma → dst lemma |
+
+---
+
+## Re-importing after schema changes
+
+```bash
+# Reset markings for a language group
+php bin/console d:run -- "UPDATE freedict_catalog SET marking='new' WHERE dst='eng'"
+
+# Delete cached TEI files to force re-extraction
+find /APP_DATA_DIR/tei -name "tei.xml" -size -100k -delete
+
+# Re-import
+php bin/console app:tei:import:all --dst=eng -v
+```
+
+See `PLAN.md` for current status and next steps.

@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FreeDict — Multilingual Dictionary Service{% endblock %}
+
+{% block body %}
+
+{# ── Hero ──────────────────────────────────────────────────────────────────── #}
+<div class="page-header d-print-none">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">FreeDict Translation Service</h2>
+                <div class="text-muted mt-1">
+                    Word-level lookup across {{ totals.languages|number_format }} languages —
+                    {{ totals.pairs|number_format }} dictionary pairs,
+                    {{ totals.lemmas|number_format }} lemmas,
+                    {{ totals.translations|number_format }} translation edges
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-body">
+<div class="container-xl">
+
+{# ── Stat cards ────────────────────────────────────────────────────────────── #}
+<div class="row row-deck row-cards mb-4">
+    {% set stats = [
+        {label: 'Languages', value: totals.languages, icon: 'tabler:language', color: 'blue'},
+        {label: 'Dictionary Pairs', value: totals.pairs, icon: 'tabler:book', color: 'azure'},
+        {label: 'Lemmas', value: totals.lemmas, icon: 'tabler:letter-case', color: 'indigo'},
+        {label: 'Translations', value: totals.translations, icon: 'tabler:arrows-exchange', color: 'teal'},
+    ] %}
+    {% for s in stats %}
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="subheader">{{ s.label }}</div>
+                </div>
+                <div class="h1 mb-0">{{ s.value|number_format }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Lookup form ───────────────────────────────────────────────────────────── #}
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">{{ ux_icon('tabler:search') }} Word Lookup</h3>
+        <div class="card-subtitle text-muted">Definitions, English translations, and content-type classification</div>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{{ path('app_lookup') }}" class="row g-3 align-items-end">
+            <div class="col">
+                <input type="text" name="word"
+                       class="form-control form-control-lg"
+                       placeholder="e.g. photographie, Gemälde, grabado…">
+            </div>
+            <div class="col-auto" style="min-width:180px">
+                <select name="lang" class="form-select form-select-lg">
+                    <option value="">— source language —</option>
+                    {% for code in languages %}
+                        <option value="{{ code }}">{{ code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg">Look up</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row row-cards mb-4">
+
+{# ── Catalog progress ──────────────────────────────────────────────────────── #}
+<div class="col-lg-5">
+    <div class="card h-100">
+        <div class="card-header">
+            <h3 class="card-title">{{ ux_icon('tabler:database-import') }} Import Pipeline</h3>
+        </div>
+        <div class="card-body">
+            {% set markings = {
+                new:        {label: 'Pending',    color: 'secondary'},
+                downloaded: {label: 'Downloaded', color: 'warning'},
+                processed:  {label: 'Imported',   color: 'success'},
+            } %}
+            {% for key, meta in markings %}
+                {% set row = catalogByMarking[key] ?? {count: 0, headwords: 0} %}
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <span class="badge bg-{{ meta.color }}-lt text-{{ meta.color }} badge-pill">
+                            {{ row.count }}
+                        </span>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between mb-1">
+                            <strong>{{ meta.label }}</strong>
+                            <small class="text-muted">{{ row.headwords|number_format }} headwords</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer">
+            <a href="{{ path('status_dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                View all pairs →
+            </a>
+        </div>
+    </div>
+</div>
+
+{# ── *→eng pairs ───────────────────────────────────────────────────────────── #}
+<div class="col-lg-7">
+    <div class="card h-100">
+        <div class="card-header">
+            <h3 class="card-title">{{ ux_icon('tabler:language') }} Available →English Dictionaries</h3>
+            <div class="card-subtitle text-muted">Used for vocabulary classification</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table card-table table-vcenter">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th class="text-end">Translations</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in engPairs %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-blue-lt me-1">{{ p.src }}</span>
+                            <span class="text-muted">→</span>
+                            <span class="badge bg-green-lt ms-1">eng</span>
+                            <small class="text-muted ms-2">{{ p.name }}</small>
+                        </td>
+                        <td class="text-end">{{ p.edges|number_format }}</td>
+                        <td>
+                            <a href="{{ path('app_lookup', {lang: p.src}) }}" class="btn btn-sm btn-outline-primary">
+                                Try
+                            </a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3" class="text-muted text-center py-3">
+                        No →eng pairs imported yet.<br>
+                        Run <code>app:tei:import:all --dst=eng</code>
+                    </td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</div>{# /row #}
+</div>{# /container #}
+</div>{# /page-body #}
+{% endblock %}

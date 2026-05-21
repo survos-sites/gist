@@ -1925,6 +1925,28 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     default_hits_per_page?: int|Param, // Default: 24
  *     default_hits_per_page_choices?: list<int|Param>,
  * }
+ * @psalm-type DoctrineDiagramConfig = array{
+ *     er?: array{
+ *         filename?: scalar|Param|null, // Default: "%kernel.project_dir%/er"
+ *         size?: "mini"|"midi"|"maxi"|Param, // Default: "midi"
+ *         theme?: scalar|Param|null, // Default: "_none_"
+ *         connection?: scalar|Param|null, // Default: null
+ *         exclude?: list<scalar|Param|null>,
+ *     },
+ *     class?: array{
+ *         filename?: scalar|Param|null, // Default: "%kernel.project_dir%/class"
+ *         size?: "mini"|"midi"|"maxi"|Param, // Default: "midi"
+ *         theme?: scalar|Param|null, // Default: "_none_"
+ *         em?: scalar|Param|null, // Default: null
+ *         exclude?: list<scalar|Param|null>,
+ *     },
+ *     convert?: array{
+ *         format?: "puml"|"png"|"svg"|Param, // Default: "svg"
+ *         converter?: "auto"|"jar"|"server"|Param, // Default: "auto"
+ *         jar?: scalar|Param|null, // Default: null
+ *         server?: scalar|Param|null, // Default: "http://www.plantuml.com/plantuml"
+ *     },
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1978,6 +2000,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         live_component?: LiveComponentConfig,
  *         mezcalito_ux_search?: MezcalitoUxSearchConfig,
  *         survos_search?: SurvosSearchConfig,
+ *         doctrine_diagram?: DoctrineDiagramConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -2031,6 +2054,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         live_component?: LiveComponentConfig,
  *         mezcalito_ux_search?: MezcalitoUxSearchConfig,
  *         survos_search?: SurvosSearchConfig,
+ *         doctrine_diagram?: DoctrineDiagramConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,
